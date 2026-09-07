@@ -25,6 +25,7 @@
    - [3.8 Funções matemáticas (`Math`)](#38-funções-matemáticas-math)
 4. [Estruturas Condicionais](#4-estruturas-condicionais)
    - [4.1 Expressões comparativas](#41-expressões-comparativas)
+   - [4.2 Expressões lógicas](#42-expressões-lógicas)
 5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
 
 ---
@@ -331,6 +332,72 @@ System.out.println(a != b); // true
 ```
 
 > ⚠️ **Não confunda `==` com `=`.** O operador `=` **atribui** um valor a uma variável; o operador `==` **compara** dois valores. Trocar um pelo outro é um dos erros mais comuns de quem está começando.
+
+### 4.2 Expressões lógicas
+
+Assim como as expressões comparativas, uma **expressão lógica** também resulta em `true` ou `false` — mas, em vez de comparar dois valores diretamente, ela **combina o resultado de outras expressões** (geralmente comparativas) usando os operadores lógicos.
+
+| Operador | Nome | Ideia |
+|---|---|---|
+| `&&` | E (AND) | **Todas** as comparações precisam ser verdadeiras |
+| \|\| | OU (OR) | **Pelo menos uma** das comparações precisa ser verdadeira |
+| `!` | Não (NOT) | **Inverte** o resultado da expressão |
+
+> 💡 **Analogia:** pense em `&&` como uma dupla exigência — "preciso do CPF **e** do endereço para liberar o cadastro" (falta um, já não libera). `||` é uma exigência flexível — "aceito CPF **ou** RG" (qualquer um dos dois já resolve). E `!` é simplesmente virar a resposta ao contrário — se a resposta era "sim", `!` faz virar "não".
+
+#### `&&` (E) — todas precisam ser verdadeiras
+
+```java
+int x = 5;
+
+x <= 20 && x == 10   // false -> a segunda comparação (x == 10) é falsa, então tudo vira false
+x > 0   && x != 3    // true  -> as duas comparações são verdadeiras
+```
+
+**Tabela-verdade do `&&`:**
+
+| A | B | A `&&` B |
+|---|---|---|
+| F | F | F |
+| F | V | F |
+| V | F | F |
+| V | V | V |
+
+#### `||` (OU) — basta uma ser verdadeira
+
+```java
+int x = 5;
+
+x == 10 || x <= 20   // true  -> a segunda comparação (x <= 20) já é verdadeira, então tudo vira true
+x >= 10 || x != 5    // false -> as duas comparações são falsas
+```
+
+**Tabela-verdade do `||`:**
+
+| A | B | A \|\| B |
+|---|---|---|
+| F | F | F |
+| F | V | V |
+| V | F | V |
+| V | V | V |
+
+#### `!` (NÃO) — inverte o resultado
+
+```java
+int x = 5;
+
+!(x == 10)              // true  -> "x == 10" é false, o '!' inverte para true
+!(x <= 20 && x == 10)   // true  -> "x <= 20 && x == 10" é false, o '!' inverte para true
+```
+
+> 💡 **Analogia:** `!(x == 10)` é como perguntar **"5 não é igual a 10, né?"** — e a resposta é **"sim, é verdade, 5 não é igual a 10"** (`true`). O `!` transforma a pergunta em sua negativa e avalia se essa negativa é verdadeira.
+
+**Tabela-verdade do `!`:**
+
+| A | `!`A |
+|---|---|
+| F | V |
+| V | F |
 
 ---
 
