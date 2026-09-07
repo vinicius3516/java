@@ -26,8 +26,6 @@
 4. [Estruturas Condicionais](#4-estruturas-condicionais)
    - [4.1 Expressões comparativas](#41-expressões-comparativas)
 5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
-6. [Como executar os exemplos](#6-como-executar-os-exemplos)
-7. [Roadmap de estudo](#7-roadmap-de-estudo)
 
 ---
 
@@ -409,39 +407,3 @@ double total = pecaNumber1 * pecaValue1 + pecaNumber2 * pecaValue2;
 System.out.printf("VALOR A PAGAR: R$ %.2f", total);
 ```
 </details>
-
----
-
-## 6. Como executar os exemplos
-
-Pré-requisitos: **JDK 21+ (LTS)** instalado.
-
-```bash
-# Compilar
-javac Main.java
-
-# Executar
-java Main
-```
-
-Ou, em um projeto Maven (como o `java-estudos`):
-
-```bash
-mvn compile
-mvn exec:java -Dexec.mainClass="Main"
-```
-
----
-
-## 7. Roadmap de estudo
-
-Trilha de estudo completa (rastreada no Notion), com o status atual de cada tópico:
-
-- [x] **Java** — em andamento (conteúdo consolidado neste README)
-- [ ] Git/GitHub
-- [ ] Linux
-- [ ] Docker
-- [ ] Banco de Dados — SQL/NoSQL
-- [ ] Cloud — GCP/AWS
-
-Próximos tópicos de Java a incorporar aqui: **estruturas de repetição**, **vetores e matrizes**, **strings**, **métodos**, **orientação a objetos**.
