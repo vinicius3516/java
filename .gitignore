@@ -1,0 +1,5 @@
+# Este repositório só versiona o README.md no GitHub.
+# O projeto Maven (pom.xml, src/, target/, .idea/) fica só local, para praticar.
+*
+!.gitignore
+!README.md
