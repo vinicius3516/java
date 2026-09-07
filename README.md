@@ -23,9 +23,11 @@
    - [3.6 Processamento de dados e Casting](#36-processamento-de-dados-e-casting)
    - [3.7 Entrada de dados (`Scanner`)](#37-entrada-de-dados-scanner)
    - [3.8 Funções matemáticas (`Math`)](#38-funções-matemáticas-math)
-4. [Exercícios Resolvidos](#4-exercícios-resolvidos)
-5. [Como executar os exemplos](#5-como-executar-os-exemplos)
-6. [Roadmap de estudo](#6-roadmap-de-estudo)
+4. [Estruturas Condicionais](#4-estruturas-condicionais)
+   - [4.1 Expressões comparativas](#41-expressões-comparativas)
+5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
+6. [Como executar os exemplos](#6-como-executar-os-exemplos)
+7. [Roadmap de estudo](#7-roadmap-de-estudo)
 
 ---
 
@@ -178,7 +180,7 @@ ENTRADA  ──▶  PROCESSAMENTO  ──▶  SAÍDA
 
 > 💡 **Analogia:** pense em uma **fábrica**: a *entrada* é a matéria-prima que chega, o *processamento* é a linha de produção que transforma essa matéria-prima, e a *saída* é o produto final que sai pela porta.
 
-Essas três operações aparecem em praticamente todo exercício de lógica de programação — inclusive nos [exercícios resolvidos](#4-exercícios-resolvidos) deste repositório.
+Essas três operações aparecem em praticamente todo exercício de lógica de programação — inclusive nos [exercícios resolvidos](#5-exercícios-resolvidos) deste repositório.
 
 ### 3.5 Saída de dados (`System.out`)
 
@@ -297,7 +299,44 @@ System.out.println("Valor absoluto de " + z + " = " + Math.abs(z));
 
 ---
 
-## 4. Exercícios Resolvidos
+## 4. Estruturas Condicionais
+
+Estruturas condicionais permitem que o programa **desvie** o fluxo de execução com base em uma condição — deixando de lado a execução puramente sequencial da seção 3 para tomar decisões.
+
+### 4.1 Expressões comparativas
+
+Uma **expressão comparativa** é uma expressão que compara dois valores e produz um resultado **booleano** (`true` ou `false`), em vez de um número.
+
+```java
+5 > 10   // resultado: false
+```
+
+> 💡 **Analogia:** uma expressão comparativa é uma **pergunta de sim/não** feita ao programa — "esse valor é maior que aquele?" — e a resposta (`true`/`false`) é o que as estruturas condicionais (próximo tópico) usam para decidir qual caminho seguir.
+
+| Operador | Significado |
+|---|---|
+| `>` | Maior que |
+| `<` | Menor que |
+| `>=` | Maior ou igual a |
+| `<=` | Menor ou igual a |
+| `==` | Igual a |
+| `!=` | Diferente de |
+
+```java
+int a = 5;
+int b = 10;
+
+System.out.println(a > b);  // false
+System.out.println(a < b);  // true
+System.out.println(a == 5); // true
+System.out.println(a != b); // true
+```
+
+> ⚠️ **Não confunda `==` com `=`.** O operador `=` **atribui** um valor a uma variável; o operador `==` **compara** dois valores. Trocar um pelo outro é um dos erros mais comuns de quem está começando.
+
+---
+
+## 5. Exercícios Resolvidos
 
 Exercícios práticos de fixação da **estrutura sequencial**, escritos no repositório de prática `java-estudos` (código-fonte à parte deste material teórico):
 
@@ -370,3 +409,39 @@ double total = pecaNumber1 * pecaValue1 + pecaNumber2 * pecaValue2;
 System.out.printf("VALOR A PAGAR: R$ %.2f", total);
 ```
 </details>
+
+---
+
+## 6. Como executar os exemplos
+
+Pré-requisitos: **JDK 21+ (LTS)** instalado.
+
+```bash
+# Compilar
+javac Main.java
+
+# Executar
+java Main
+```
+
+Ou, em um projeto Maven (como o `java-estudos`):
+
+```bash
+mvn compile
+mvn exec:java -Dexec.mainClass="Main"
+```
+
+---
+
+## 7. Roadmap de estudo
+
+Trilha de estudo completa (rastreada no Notion), com o status atual de cada tópico:
+
+- [x] **Java** — em andamento (conteúdo consolidado neste README)
+- [ ] Git/GitHub
+- [ ] Linux
+- [ ] Docker
+- [ ] Banco de Dados — SQL/NoSQL
+- [ ] Cloud — GCP/AWS
+
+Próximos tópicos de Java a incorporar aqui: **estruturas de repetição**, **vetores e matrizes**, **strings**, **métodos**, **orientação a objetos**.
