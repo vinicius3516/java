@@ -27,6 +27,7 @@
    - [4.1 Expressões comparativas](#41-expressões-comparativas)
    - [4.2 Expressões lógicas](#42-expressões-lógicas)
    - [4.3 Estruturas condicionais (if / else / else if)](#43-estruturas-condicionais-if--else--else-if)
+   - [4.4 Operadores de atribuição cumulativa](#44-operadores-de-atribuição-cumulativa)
 5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
 
 ---
@@ -464,6 +465,72 @@ if (condicao) {
 ```
 
 Continuamos lidando com mais de duas condições, só que agora de forma linear e mais legível — cada `else if` é testado em sequência, na ordem em que aparece, até que uma condição seja verdadeira (ou até cair no `else` final, se nenhuma for).
+
+### 4.4 Operadores de atribuição cumulativa
+
+Repare no trecho abaixo, que calcula o valor de uma conta cobrando R$ 2,00 por minuto excedente após os 100 minutos:
+
+```java
+Scanner sc = new Scanner(System.in);
+
+System.out.println("Informe o numero de minutos:");
+int minutes = sc.nextInt();
+
+double accountValue = 50.0;
+
+if (minutes > 100) {
+    accountValue = accountValue + (minutes - 100) * 2;
+    System.out.printf("O valor da sua conta fechou em: R$ %.2f%n", accountValue);
+} else {
+    System.out.printf("O valor da sua conta fechou em: R$ %.2f%n", accountValue);
+}
+
+sc.close();
+```
+
+No cálculo do novo valor da conta, foi preciso pegar a própria variável `accountValue` e somá-la ao resultado de uma operação:
+
+```java
+accountValue = accountValue + (minutes - 100) * 2;
+```
+
+Esse padrão — "pega a variável, aplica uma operação nela mesma, e guarda o resultado de volta nela" — é tão comum que Java oferece uma forma mais curta para escrevê-lo: o **operador de atribuição cumulativa**. Em vez de `accountValue = accountValue + ...`, basta escrever:
+
+```java
+accountValue += (minutes - 100) * 2; // "accountValue passa a valer ele mesmo + (minutes - 100) * 2"
+```
+
+> 💡 **Analogia:** é como dizer "acrescenta isso ao que eu já tinha", em vez de "pega o que eu já tinha, soma com isso, e guarda de novo no mesmo lugar" — o resultado é idêntico, só que mais direto.
+
+Existe um operador cumulativo para cada operador aritmético:
+
+| Forma cumulativa | Equivale a |
+|---|---|
+| `a += b` | `a = a + b` |
+| `a -= b` | `a = a - b` |
+| `a *= b` | `a = a * b` |
+| `a /= b` | `a = a / b` |
+| `a %= b` | `a = a % b` |
+
+O mesmo programa, agora usando o operador cumulativo:
+
+```java
+Scanner sc = new Scanner(System.in);
+
+System.out.println("Informe o numero de minutos:");
+int minutes = sc.nextInt();
+
+double accountValue = 50.0;
+
+if (minutes > 100) {
+    accountValue += (minutes - 100) * 2;
+    System.out.printf("O valor da sua conta fechou em: R$ %.2f%n", accountValue);
+} else {
+    System.out.printf("O valor da sua conta fechou em: R$ %.2f%n", accountValue);
+}
+
+sc.close();
+```
 
 ---
 
