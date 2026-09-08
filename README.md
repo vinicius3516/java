@@ -29,6 +29,7 @@
    - [4.3 Estruturas condicionais (if / else / else if)](#43-estruturas-condicionais-if--else--else-if)
    - [4.4 Operadores de atribuição cumulativa](#44-operadores-de-atribuição-cumulativa)
    - [4.5 Estrutura switch-case](#45-estrutura-switch-case)
+   - [4.6 Expressão condicional ternária](#46-expressão-condicional-ternária)
 5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
 
 ---
@@ -597,6 +598,42 @@ switch (x) {
 System.out.println("Dia da semana: " + dia);
 sc.close();
 ```
+
+### 4.6 Expressão condicional ternária
+
+É uma alternativa mais compacta ao `if`/`else` para os casos em que o único objetivo é **decidir o valor de uma variável** com base em uma condição.
+
+**Sintaxe:**
+
+```java
+(condicao) ? valor_se_true : valor_se_false;
+```
+
+Se `condicao` for `true`, a expressão inteira "vira" `valor_se_true`; se for `false`, "vira" `valor_se_false`. É a mesma decisão de um `if`/`else`, só que expressa como um valor único, direto na linha.
+
+> 💡 **Analogia:** pense nela como uma pergunta de sim/não seguida de duas respostas prontas, separadas por `:` — "está chovendo? leva o guarda-chuva : deixa em casa" — só que tudo isso "vira" o valor de uma variável de uma vez, sem precisar de blocos `{ }`.
+
+**Exemplo — calculando desconto sem a ternária:**
+
+```java
+double preco = 34.5;
+double desconto;
+
+if (preco < 20.0) {
+    desconto = preco * 0.1;
+} else {
+    desconto = preco * 0.05;
+}
+```
+
+**O mesmo exemplo, agora com a condicional ternária:**
+
+```java
+double preco = 34.5;
+double desconto = (preco < 20.0) ? preco * 0.1 : preco * 0.05;
+```
+
+O resultado é exatamente o mesmo, mas em uma única linha — ideal quando a única coisa que o `if`/`else` faz é atribuir um valor a uma variável.
 
 ---
 
