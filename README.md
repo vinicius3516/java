@@ -26,6 +26,7 @@
 4. [Estruturas Condicionais](#4-estruturas-condicionais)
    - [4.1 Expressões comparativas](#41-expressões-comparativas)
    - [4.2 Expressões lógicas](#42-expressões-lógicas)
+   - [4.3 Estruturas condicionais (if / else / else if)](#43-estruturas-condicionais-if--else--else-if)
 5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
 
 ---
@@ -398,6 +399,71 @@ int x = 5;
 |---|---|
 | F | V |
 | V | F |
+
+### 4.3 Estruturas condicionais (if / else / else if)
+
+Uma **estrutura condicional** é uma estrutura de controle que permite definir que um determinado bloco de comandos só será executado dependendo do resultado de uma condição (uma expressão comparativa e/ou lógica, como as vistas em [4.1](#41-expressões-comparativas) e [4.2](#42-expressões-lógicas)).
+
+#### `if` simples
+
+```java
+if (condicao) {
+    comando1;
+    comando2;
+}
+```
+
+Os comandos dentro das chaves só são executados caso `condicao` seja `true`. Caso contrário, o bloco inteiro é simplesmente ignorado e a execução segue em frente.
+
+#### `if` / `else` — estrutura composta
+
+```java
+if (condicao) {
+    comando1;
+    comando2;
+} else {
+    comando3;
+    comando4;
+}
+```
+
+Aqui a lógica muda um pouco: se `condicao` for falsa, o bloco executado é exatamente o que está dentro do `else`. É como dizer **"se tal condição for verdadeira, execute X; caso contrário, execute Y"** — sempre um dos dois blocos roda, nunca os dois nem nenhum.
+
+> 💡 **Analogia:** pense num guarda-chuva — "se estiver chovendo, eu levo o guarda-chuva; senão, eu deixo em casa". Não existe meio-termo: uma das duas ações sempre acontece.
+
+#### E quando há mais de duas possibilidades?
+
+Uma forma (pouco elegante) de resolver seria aninhar um `if`/`else` dentro do `else`:
+
+```java
+if (condicao) {
+    comando1;
+    comando2;
+} else {
+    if (condicao) {
+        comando3;
+    } else {
+        comando4;
+    }
+}
+```
+
+Isso funciona, mas cada nova possibilidade cria mais um nível de aninhamento, o que deixa o código cada vez mais difícil de ler. Na prática, o dia a dia usa uma forma mais simples e organizada para o mesmo caso: o `else if`.
+
+#### `if` / `else if` / `else`
+
+```java
+if (condicao) {
+    comando1;
+    comando2;
+} else if (condicao) {
+    comando3;
+} else {
+    comando4;
+}
+```
+
+Continuamos lidando com mais de duas condições, só que agora de forma linear e mais legível — cada `else if` é testado em sequência, na ordem em que aparece, até que uma condição seja verdadeira (ou até cair no `else` final, se nenhuma for).
 
 ---
 
