@@ -28,6 +28,7 @@
    - [4.2 Expressões lógicas](#42-expressões-lógicas)
    - [4.3 Estruturas condicionais (if / else / else if)](#43-estruturas-condicionais-if--else--else-if)
    - [4.4 Operadores de atribuição cumulativa](#44-operadores-de-atribuição-cumulativa)
+   - [4.5 Estrutura switch-case](#45-estrutura-switch-case)
 5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
 
 ---
@@ -529,6 +530,71 @@ if (minutes > 100) {
     System.out.printf("O valor da sua conta fechou em: R$ %.2f%n", accountValue);
 }
 
+sc.close();
+```
+
+### 4.5 Estrutura switch-case
+
+Quando existem várias opções de fluxo diferentes a serem tratadas com base no valor de **uma única variável**, encadear vários `if`/`else if` pode deixar o código repetitivo. Nesses casos, uma alternativa é a estrutura `switch-case`:
+
+```java
+switch (expressao) {
+    case valor1:
+        comando1;
+        comando2;
+        break;
+    case valor2:
+        comando3;
+        comando4;
+        break;
+    default:
+        comando5;
+        comando6;
+        break;
+}
+```
+
+`expressao` é avaliada uma única vez, e o Java compara o resultado com cada `case`, executando o bloco correspondente ao valor que bater. Se nenhum `case` corresponder, o bloco `default` é executado (funciona como o `else` final de uma cadeia de `if`/`else if`).
+
+> 💡 **Analogia:** pense num `switch` como um recepcionista com uma lista de senhas — ele olha a sua senha (`expressao`) e te encaminha direto para o guichê (`case`) correspondente, sem precisar perguntar "é a senha 1? não? é a 2? não?..." uma por uma como um `if`/`else if` faria.
+
+> ⚠️ **Atenção ao `break`:** cada `case` deve terminar com `break`, senão a execução "cai" para o próximo `case` (comportamento chamado de *fall-through*) e continua executando os comandos seguintes, mesmo que o valor não bata.
+
+**Exemplo — convertendo um número em dia da semana:**
+
+```java
+Scanner sc = new Scanner(System.in);
+int x = sc.nextInt();
+String dia;
+
+switch (x) {
+    case 1:
+        dia = "domingo";
+        break;
+    case 2:
+        dia = "segunda";
+        break;
+    case 3:
+        dia = "terca";
+        break;
+    case 4:
+        dia = "quarta";
+        break;
+    case 5:
+        dia = "quinta";
+        break;
+    case 6:
+        dia = "sexta";
+        break;
+    case 7:
+        dia = "sabado";
+        break;
+    default:
+        dia = "valor invalido";
+        break;
+}
+
+System.out.println("Dia da semana: " + dia);
 sc.close();
 ```
 
