@@ -30,6 +30,7 @@
    - [4.4 Operadores de atribuição cumulativa](#44-operadores-de-atribuição-cumulativa)
    - [4.5 Estrutura switch-case](#45-estrutura-switch-case)
    - [4.6 Expressão condicional ternária](#46-expressão-condicional-ternária)
+   - [4.7 Escopo e inicialização de variáveis](#47-escopo-e-inicialização-de-variáveis)
 5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
 
 ---
@@ -634,6 +635,45 @@ double desconto = (preco < 20.0) ? preco * 0.1 : preco * 0.05;
 ```
 
 O resultado é exatamente o mesmo, mas em uma única linha — ideal quando a única coisa que o `if`/`else` faz é atribuir um valor a uma variável.
+
+### 4.7 Escopo e inicialização de variáveis
+
+O **escopo** de uma variável é a região do programa onde ela é válida — ou seja, onde ela pode ser referenciada. Em Java, esse limite é sempre um bloco `{ }`: uma variável declarada dentro de um bloco só existe (e só pode ser usada) dentro dele; fora disso, ela simplesmente não é enxergada.
+
+> 💡 **Analogia:** pense no escopo como o cômodo de uma casa — o que você guarda dentro do quarto só está acessível enquanto você está naquele quarto. Saindo dele (fechando a chave `}`), o que estava lá dentro deixa de existir para o resto da casa.
+
+**Exemplo com erro de escopo:**
+
+```java
+double preco = 400.0;
+
+if (preco < 200) {
+    double desconto = preco * 0.05;
+}
+
+System.out.println(desconto); // ERRO de compilação: 'desconto' não existe aqui
+```
+
+Esse código não compila porque `desconto` foi declarada **dentro** do bloco do `if` — seu escopo termina na chave `}` que fecha o `if`. O `System.out.println`, estando fora desse bloco, simplesmente não tem acesso a ela.
+
+**Correção — declarar (e inicializar) a variável antes do `if`:**
+
+```java
+double preco = 400.0;
+double desconto = 0;
+
+if (preco < 200) {
+    desconto = preco * 0.05;
+}
+
+System.out.println(desconto);
+```
+
+Agora `desconto` é declarada num escopo mais amplo (fora do `if`), e o bloco do `if` apenas **atribui** um novo valor a ela — sem redeclará-la. Assim ela continua acessível no `System.out.println`, valendo `0` caso a condição do `if` seja falsa, ou o valor calculado caso seja verdadeira.
+
+> ⚠️ **Por que inicializar com `0`?** o compilador não sabe, em tempo de compilação, se a condição do `if` vai ser verdadeira ou falsa em tempo de execução. Se `desconto` fosse apenas declarada (`double desconto;`, sem valor) e o `if` não fosse executado, a variável chegaria "vazia" até o `println` — e o Java não permite usar uma variável local que pode não ter sido inicializada. Dar um valor inicial (mesmo que `0`) garante que ela sempre tenha algo válido, independente do caminho que o programa seguir.
+
+Esse mesmo princípio vale de forma geral: **uma variável não pode ser usada — nem mesmo impressa — antes de ser inicializada.** Referenciá-la em qualquer expressão sem antes atribuir um valor é erro de compilação em Java.
 
 ---
 
