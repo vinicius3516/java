@@ -31,7 +31,9 @@
    - [4.5 Estrutura switch-case](#45-estrutura-switch-case)
    - [4.6 Expressão condicional ternária](#46-expressão-condicional-ternária)
    - [4.7 Escopo e inicialização de variáveis](#47-escopo-e-inicialização-de-variáveis)
-5. [Exercícios Resolvidos](#5-exercícios-resolvidos)
+5. [Estruturas de Repetição](#5-estruturas-de-repetição)
+   - [5.1 Estrutura de repetição `while`](#51-estrutura-de-repetição-while)
+6. [Exercícios Resolvidos](#6-exercícios-resolvidos)
 
 ---
 
@@ -677,7 +679,60 @@ Esse mesmo princípio vale de forma geral: **uma variável não pode ser usada �
 
 ---
 
-## 5. Exercícios Resolvidos
+## 5. Estruturas de Repetição
+
+### 5.1 Estrutura de repetição `while`
+
+O `while` é uma estrutura de controle que **repete a execução de um bloco de código enquanto uma condição for verdadeira**. Assim que a condição avaliar `false`, o laço para e a execução segue para o que vem depois do bloco.
+
+**Sintaxe:**
+
+```java
+while (condicao) {
+    comando1;
+    comando2;
+}
+```
+
+A regra é simples: se `condicao` for `true`, executa o bloco e volta a testar a condição de novo; se for `false`, pula o bloco inteiro e segue em frente.
+
+O uso mais comum do `while` é justamente quando **não se sabe de antemão quantas repetições serão necessárias** — diferente de, por exemplo, percorrer um intervalo fixo de números.
+
+> 💡 **Analogia:** pense no `while` como alguém servindo café enquanto a xícara não estiver cheia — ninguém sabe de antemão quantos "goles" de café serão necessários; a única regra é continuar servindo enquanto a condição ("xícara não está cheia") for verdadeira.
+
+**Exemplo — somando números até o usuário digitar 0:**
+
+O cenário: o programa deve receber números inteiros do usuário até que o valor digitado seja `0`. Quando isso acontecer, deve exibir a soma de todos os números diferentes de zero informados. Como não se sabe quantos números o usuário vai digitar, esse é exatamente o tipo de caso que pede um `while`:
+
+```java
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        int x = sc.nextInt();
+        int soma = 0;
+
+        while (x != 0) {
+            soma += x;
+            x = sc.nextInt();
+        }
+
+        System.out.println("A soma dos valores informados é: " + soma);
+
+        sc.close();
+    }
+}
+```
+
+A cada volta do laço, o valor lido é somado a `soma`, e um novo número é lido em seguida. Quando o usuário finalmente digitar `0`, a condição `x != 0` se torna `false` e o `while` é encerrado.
+
+---
+
+## 6. Exercícios Resolvidos
 
 Exercícios práticos de fixação da **estrutura sequencial**, escritos no repositório de prática `java-estudos` (código-fonte à parte deste material teórico):
 
