@@ -33,6 +33,7 @@
    - [4.7 Escopo e inicialização de variáveis](#47-escopo-e-inicialização-de-variáveis)
 5. [Estruturas de Repetição](#5-estruturas-de-repetição)
    - [5.1 Estrutura de repetição `while`](#51-estrutura-de-repetição-while)
+   - [5.2 Estrutura de repetição `for`](#52-estrutura-de-repetição-for)
 6. [Exercícios Resolvidos](#6-exercícios-resolvidos)
 
 ---
@@ -729,6 +730,75 @@ public class Main {
 ```
 
 A cada volta do laço, o valor lido é somado a `soma`, e um novo número é lido em seguida. Quando o usuário finalmente digitar `0`, a condição `x != 0` se torna `false` e o `while` é encerrado.
+
+### 5.2 Estrutura de repetição `for`
+
+O `for` é uma estrutura de controle que repete um bloco de comandos para um determinado intervalo de valores. Ao contrário do [`while`](#51-estrutura-de-repetição-while), ele é a escolha natural **quando já se sabe de antemão a quantidade de repetições** (ou o intervalo de valores a percorrer).
+
+**Sintaxe:**
+
+```java
+for (inicio; condicao; incremento) {
+    comando1;
+    comando2;
+}
+```
+
+O `for` é dividido em três partes, separadas por `;`:
+
+- **`inicio`** — executado **uma única vez**, logo no começo, geralmente criando a variável de controle do laço (a mesma usada na condição e no incremento).
+- **`condicao`** — testada a cada volta, igual ao `while`: se `true`, o bloco executa e o laço continua; se `false`, o `for` é encerrado.
+- **`incremento`** — executado **ao final de cada volta**, depois do bloco rodar, e é o responsável por "andar" em direção à condição de parada.
+
+> 💡 **Analogia:** pense no `for` como configurar um contador regressivo de forno — você define o ponto de partida (`inicio`), até onde ele deve contar (`condicao`), e de quanto em quanto ele avança a cada segundo (`incremento`). Tudo isso já fica combinado de uma vez, na própria "cabeça" do loop.
+
+**Exemplo — somando N números lidos do usuário:**
+
+O cenário: ler um valor inteiro `N` e, em seguida, ler `N` números inteiros, exibindo ao final a soma de todos eles. Como a quantidade de repetições (`N`) é conhecida antes do laço começar, esse é um caso perfeito para o `for`:
+
+```java
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        int n = sc.nextInt();
+        int soma = 0;
+
+        for (int i = 0; i < n; i++) {
+            int x = sc.nextInt();
+            soma += x;
+        }
+
+        System.out.println("A soma dos numeros é: " + soma);
+
+        sc.close();
+    }
+}
+```
+
+Aqui, `int i = 0` é o `inicio` (criado só na primeira vez), `i < n` é a `condicao` (testada a cada volta) e `i++` é o `incremento` (executado ao final de cada volta, somando 1 a `i`). Esse `i++` também poderia ser escrito como `i += 1` — o efeito é o mesmo.
+
+**Contando para cima:**
+
+```java
+for (int i = 5; i <= 10; i++) {
+    System.out.println("I vale: " + i);
+}
+```
+
+**Contando para baixo (decrementando):**
+
+Basta inverter a lógica: começar de um valor maior, testar até um valor menor, e decrementar em vez de incrementar (`i--`, equivalente a `i -= 1`):
+
+```java
+for (int i = 5; i >= 0; i--) {
+    System.out.println("I vale: " + i);
+}
+```
 
 ---
 
