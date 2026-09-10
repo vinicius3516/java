@@ -34,6 +34,7 @@
 5. [Estruturas de Repetição](#5-estruturas-de-repetição)
    - [5.1 Estrutura de repetição `while`](#51-estrutura-de-repetição-while)
    - [5.2 Estrutura de repetição `for`](#52-estrutura-de-repetição-for)
+   - [5.3 Estrutura de repetição `do-while`](#53-estrutura-de-repetição-do-while)
 6. [Exercícios Resolvidos](#6-exercícios-resolvidos)
 
 ---
@@ -799,6 +800,52 @@ for (int i = 5; i >= 0; i--) {
     System.out.println("I vale: " + i);
 }
 ```
+
+### 5.3 Estrutura de repetição `do-while`
+
+É uma variação menos usada que o [`while`](#51-estrutura-de-repetição-while) e o [`for`](#52-estrutura-de-repetição-for), mas que se encaixa melhor em alguns cenários específicos.
+
+A diferença está em **quando** a condição é verificada: no `while` e no `for`, a condição é testada **antes** de cada execução do bloco — se ela já começar `false`, o bloco pode nunca rodar. No `do-while`, a condição só é verificada **ao final** do loop, o que garante que o bloco **sempre executa pelo menos uma vez**, independente do resultado da condição.
+
+**Sintaxe:**
+
+```java
+do {
+    comando1;
+    comando2;
+} while (condicao);
+```
+
+> 💡 **Analogia:** pense no `do-while` como provar um prato antes de decidir se repete — você primeiro come (executa o bloco), e só depois pergunta "quero mais?" (testa a condição). No `while`/`for` é o contrário: primeiro se pergunta "tem mais no prato?" para então decidir se come.
+
+**Exemplo — conversor de Celsius para Fahrenheit com repetição controlada pelo usuário:**
+
+```java
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        char resp;
+
+        do {
+            System.out.print("Digite a temperatura em Celsius: ");
+            double c = sc.nextDouble();
+            double f = 9 * c / 5 + 32;
+            System.out.printf("Equivalente em Fahrenheit: %.1f%n", f);
+            System.out.print("Deseja repetir (s/n)? ");
+            resp = sc.next().charAt(0);
+        } while (resp != 'n');
+
+        sc.close();
+    }
+}
+```
+
+Tudo dentro do `do { ... }` é executado pelo menos uma vez — o programa sempre pede ao menos uma temperatura antes mesmo de perguntar se o usuário quer repetir. O loop só volta a executar caso a condição do `while` final (`resp != 'n'`) seja `true`; assim que o usuário digitar `n`, a condição vira `false` e o laço termina.
 
 ---
 
