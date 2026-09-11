@@ -35,7 +35,9 @@
    - [5.1 Estrutura de repetição `while`](#51-estrutura-de-repetição-while)
    - [5.2 Estrutura de repetição `for`](#52-estrutura-de-repetição-for)
    - [5.3 Estrutura de repetição `do-while`](#53-estrutura-de-repetição-do-while)
-6. [Exercícios Resolvidos](#6-exercícios-resolvidos)
+6. [Outros Tópicos Básicos em Java](#6-outros-tópicos-básicos-em-java)
+   - [6.1 Funções interessantes para String](#61-funções-interessantes-para-string)
+7. [Exercícios Resolvidos](#7-exercícios-resolvidos)
 
 ---
 
@@ -849,7 +851,72 @@ Tudo dentro do `do { ... }` é executado pelo menos uma vez — o programa sempr
 
 ---
 
-## 6. Exercícios Resolvidos
+## 6. Outros Tópicos Básicos em Java
+
+### 6.1 Funções interessantes para String
+
+`String` é uma classe do Java (não um tipo primitivo) e, como tal, oferece vários **métodos prontos** para manipular texto sem precisar reimplementar essas operações na mão. Algumas das mais úteis no dia a dia:
+
+| Categoria | Método | O que faz |
+|---|---|---|
+| Formatar | `toLowerCase()` | Converte todos os caracteres para minúsculo |
+| Formatar | `toUpperCase()` | Converte todos os caracteres para maiúsculo |
+| Formatar | `trim()` | Remove espaços em branco do início e do fim da string |
+| Recortar | `substring(inicio)` | Retorna a substring a partir da posição `inicio` até o fim |
+| Recortar | `substring(inicio, fim)` | Retorna a substring entre as posições `inicio` (incluso) e `fim` (exclusivo) |
+| Substituir | `replace(char, char)` | Troca todas as ocorrências de um caractere por outro |
+| Substituir | `replace(String, String)` | Troca todas as ocorrências de uma substring por outra |
+| Buscar | `indexOf(String)` | Retorna a posição da **primeira** ocorrência de uma substring (ou `-1` se não encontrar) |
+| Buscar | `lastIndexOf(String)` | Retorna a posição da **última** ocorrência de uma substring (ou `-1` se não encontrar) |
+| Dividir | `split(String)` | Quebra a string em pedaços, usando o argumento como separador |
+
+> 💡 **Analogia:** pense numa `String` como uma fita de texto: `substring` recorta um pedaço da fita, `replace` troca trechos por outros, `indexOf`/`lastIndexOf` procuram em que ponto da fita algo aparece, e `split` corta a fita inteira em vários pedaços menores, um para cada palavra.
+
+**Exemplo — testando cada método:**
+
+```java
+String original = "abcde FGHIJ ABC abc DEFG ";
+
+String s01 = original.toLowerCase();
+String s02 = original.toUpperCase();
+String s03 = original.trim();
+String s04 = original.substring(2);
+String s05 = original.substring(2, 9);
+String s06 = original.replace('a', 'x');
+String s07 = original.replace("abc", "xy");
+int i = original.indexOf("bc");
+int j = original.lastIndexOf("bc");
+
+System.out.println("Original: -" + original + "-");
+System.out.println("toLowerCase: -" + s01 + "-");
+System.out.println("toUpperCase: -" + s02 + "-");
+System.out.println("trim: -" + s03 + "-");
+System.out.println("substring(2): -" + s04 + "-");
+System.out.println("substring(2, 9): -" + s05 + "-");
+System.out.println("replace('a', 'x'): -" + s06 + "-");
+System.out.println("replace(\"abc\", \"xy\"): -" + s07 + "-");
+System.out.println("Index of 'bc': " + i);
+System.out.println("Last index of 'bc': " + j);
+```
+
+> ⚠️ **Strings são imutáveis:** nenhum desses métodos altera `original` — todos retornam uma **nova** string com o resultado. É por isso que cada exemplo guarda o retorno numa variável nova (`s01`, `s02`, ...) em vez de reatribuir `original`.
+
+**A operação `split`:**
+
+```java
+String s = "potato apple lemon";
+String[] vect = s.split(" ");
+
+String word1 = vect[0];
+String word2 = vect[1];
+String word3 = vect[2];
+```
+
+Quando a declaração é `String[]` (com colchetes), o resultado é um **vetor** (array) — um conjunto de valores indexados, ainda não estudado em detalhe até aqui. No caso do `split`, o vetor resultante é a frase original dividida em partes, uma palavra por posição: `vect[0]` é `"potato"`, `vect[1]` é `"apple"`, e assim por diante.
+
+---
+
+## 7. Exercícios Resolvidos
 
 Exercícios práticos de fixação da **estrutura sequencial**, escritos no repositório de prática `java-estudos` (código-fonte à parte deste material teórico):
 
