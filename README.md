@@ -37,6 +37,7 @@
    - [5.3 Estrutura de repetição `do-while`](#53-estrutura-de-repetição-do-while)
 6. [Outros Tópicos Básicos em Java](#6-outros-tópicos-básicos-em-java)
    - [6.1 Funções interessantes para String](#61-funções-interessantes-para-string)
+   - [6.2 Funções](#62-funções)
 7. [Exercícios Resolvidos](#7-exercícios-resolvidos)
 
 ---
@@ -913,6 +914,75 @@ String word3 = vect[2];
 ```
 
 Quando a declaração é `String[]` (com colchetes), o resultado é um **vetor** (array) — um conjunto de valores indexados, ainda não estudado em detalhe até aqui. No caso do `split`, o vetor resultante é a frase original dividida em partes, uma palavra por posição: `vect[0]` é `"potato"`, `vect[1]` é `"apple"`, e assim por diante.
+
+---
+
+### 6.2 Funções
+
+Uma **função** representa um processamento que tem um significado próprio — um pedaço de lógica com nome, que pode ser chamado sempre que aquele processamento for necessário. Exemplos de funções que já vínhamos usando sem chamar assim: `Math.sqrt(double)` e `System.out.println(string)`.
+
+**Principais vantagens de usar funções:**
+
+- **Modularização** — divide um programa grande em pedaços menores e mais fáceis de entender.
+- **Delegação** — quem chama a função não precisa saber *como* ela resolve o problema, só *o que* ela faz.
+- **Reaproveitamento** — a mesma lógica pode ser chamada várias vezes, em vários pontos do programa, sem duplicar código.
+
+**Entrada e saída de dados:**
+
+- Uma função pode **receber dados de entrada**, chamados de **parâmetros** (na definição da função) ou **argumentos** (quando ela é chamada com valores concretos).
+- Uma função pode **ou não retornar uma saída** — algumas apenas executam uma ação (como `showResult`, abaixo) e outras devolvem um valor para quem as chamou (como `max`, abaixo).
+
+> 💡 **Nota:** em orientação a objetos, funções definidas dentro de uma classe recebem o nome de **métodos** — é o mesmo conceito, apenas um nome mais específico para o contexto.
+
+**Exemplo — encontrando o maior entre três números:**
+
+```java
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter three numbers:");
+
+        int a = sc.nextInt();
+        int b = sc.nextInt();
+        int c = sc.nextInt();
+
+        int higher = max(a, b, c);
+        showResult(higher);
+
+        sc.close();
+    }
+
+    public static int max(int x, int y, int z) {
+        int aux;
+        if (x > y && x > z) {
+            aux = x;
+        } else if (y > z) {
+            aux = y;
+        } else {
+            aux = z;
+        }
+        return aux;
+    }
+
+    public static void showResult(int value) {
+        System.out.println("Higher = " + value);
+    }
+}
+```
+
+```
+Enter three numbers:
+5
+8
+3
+Higher = 8
+```
+
+Aqui, `max` é uma função que **recebe três parâmetros** (`x`, `y`, `z`) e **retorna** (`return`) o maior deles como `int`. Já `showResult` **recebe um parâmetro** (`value`) mas **não retorna nada** (`void`) — sua única função é imprimir o resultado na tela. Repare também no reaproveitamento: toda a lógica de "achar o maior" fica isolada em `max`, podendo ser chamada de qualquer lugar do programa sem reescrever o `if`/`else if`/`else`.
+
+> 💬 Os modificadores `public` e `static` que aparecem antes de cada função ainda serão vistos em mais detalhe adiante no curso.
 
 ---
 
