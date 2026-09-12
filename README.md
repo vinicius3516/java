@@ -38,7 +38,13 @@
 6. [Outros Tópicos Básicos em Java](#6-outros-tópicos-básicos-em-java)
    - [6.1 Funções interessantes para String](#61-funções-interessantes-para-string)
    - [6.2 Funções](#62-funções)
-7. [Exercícios Resolvidos](#7-exercícios-resolvidos)
+7. [Orientação a Objetos](#7-orientação-a-objetos)
+   - [7.1 Motivação: o problema sem Orientação a Objetos](#71-motivação-o-problema-sem-orientação-a-objetos)
+   - [7.2 O que é uma classe](#72-o-que-é-uma-classe)
+   - [7.3 Pacotes: organizando classes em pastas](#73-pacotes-organizando-classes-em-pastas)
+   - [7.4 Instanciando objetos](#74-instanciando-objetos)
+   - [7.5 Como objetos vivem na memória: Stack e Heap](#75-como-objetos-vivem-na-memória-stack-e-heap)
+8. [Exercícios Resolvidos](#8-exercícios-resolvidos)
 
 ---
 
@@ -986,7 +992,260 @@ Aqui, `max` é uma função que **recebe três parâmetros** (`x`, `y`, `z`) e *
 
 ---
 
-## 7. Exercícios Resolvidos
+## 7. Orientação a Objetos
+
+> 🧭 **Mapa mental desta seção:** este módulo introduz várias peças que só fazem sentido juntas. A ordem abaixo foi pensada para encaixá-las progressivamente: primeiro sentimos a **dor** de programar sem classes (7.1), depois vemos **o que é** uma classe (7.2), como ela é **organizada em pastas** dentro do projeto (7.3), como ela **ganha vida** como objeto (7.4) e, por fim, **onde** esse objeto realmente mora na memória do computador (7.5). Sempre que uma peça parecer solta, volte a este mapa.
+
+### 7.1 Motivação: o problema sem Orientação a Objetos
+
+**Problema:** ler as medidas dos lados de dois triângulos, X e Y, e mostrar qual dos dois tem a maior área. A área de um triângulo a partir dos lados `a`, `b`, `c` é dada pela **fórmula de Heron**:
+
+```
+p = (a + b + c) / 2
+area = raiz_quadrada( p * (p-a) * (p-b) * (p-c) )
+```
+
+Sem usar classes, cada triângulo precisa de **três variáveis soltas** — uma para cada lado — e como temos dois triângulos, isso vira seis variáveis independentes disputando espaço no mesmo método:
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        double xA, xB, xC, yA, yB, yC;
+
+        System.out.println("Enter the measures of triangle X: ");
+        xA = sc.nextDouble();
+        xB = sc.nextDouble();
+        xC = sc.nextDouble();
+
+        System.out.println("Enter the measures of triangle Y: ");
+        yA = sc.nextDouble();
+        yB = sc.nextDouble();
+        yC = sc.nextDouble();
+
+        double p = (xA + xB + xC) / 2.0;
+        double areaX = Math.sqrt(p * (p - xA) * (p - xB) * (p - xC));
+
+        p = (yA + yB + yC) / 2.0;
+        double areaY = Math.sqrt(p * (p - yA) * (p - yB) * (p - yC));
+
+        System.out.printf("Triangle X area: %.4f%n", areaX);
+        System.out.printf("Triangle Y area: %.4f%n", areaY);
+
+        if (areaX > areaY) {
+            System.out.println("Larger area: X");
+        } else {
+            System.out.println("Larger area: Y");
+        }
+
+        sc.close();
+    }
+}
+```
+
+O código funciona, mas o problema não é rodar — é **escalar**. `xA`, `xB`, `xC` não têm, aos olhos do Java, nenhuma relação entre si: são três variáveis avulsas que *nós* sabemos que representam "o triângulo X", mas o código não expressa isso em lugar nenhum. Se amanhã precisássemos de um terceiro triângulo, ou de um perímetro, ou de mandar "um triângulo" inteiro para outro método, teríamos que arrastar três variáveis por vez, sempre na mão.
+
+> 💡 **Analogia:** é como guardar os documentos de uma pessoa (RG, CPF, comprovante de endereço) soltos em três gavetas diferentes da casa, em vez de dentro de uma única pasta com o nome da pessoa. Funciona para uma pessoa, mas vira bagunça rapidinho conforme mais pessoas (ou mais triângulos) entram na história.
+
+A saída para isso é **agrupar** os dados que pertencem ao mesmo conceito — os três lados de *um* triângulo — dentro de uma única estrutura. É exatamente para isso que serve uma **classe**.
+
+### 7.2 O que é uma classe
+
+Uma **classe** é um tipo estruturado que agrupa dois tipos de membros:
+
+| Membro | Também chamado de | O que representa |
+|---|---|---|
+| **Atributo** | dado / campo / característica | o que o objeto **é** ou **tem** |
+| **Método** | função / operação / ação | o que o objeto **faz** |
+
+> 💡 **Analogia:** pense numa classe como uma **planta baixa** (blueprint) — a planta de uma casa não é uma casa, é o *molde* que descreve quantos quartos, portas e janelas uma casa vai ter. Cada casa construída a partir dessa planta é um objeto: elas seguem a mesma estrutura, mas cada uma existe fisicamente por conta própria, com seus próprios móveis (valores) dentro.
+
+**Sintaxe básica — classe com atributos:**
+
+```java
+public class <nome_da_classe> {
+    public <tipo> <nome_atributo>;
+    public <tipo> <nome_atributo>;
+    public <tipo> <nome_atributo>;
+}
+```
+
+Aplicando ao nosso problema, o triângulo vira uma classe com três atributos (os três lados):
+
+```java
+public class Triangle {
+    public double a;
+    public double b;
+    public double c;
+}
+```
+
+Com isso, em vez de seis variáveis soltas para dois triângulos, passamos a ter **duas variáveis do tipo `Triangle`** — cada uma carregando seus próprios `a`, `b` e `c` agrupados.
+
+Além de atributos e métodos, uma classe pode oferecer outros recursos que ainda serão vistos mais à frente no curso — só para não estranhar quando aparecerem: **construtores**, **sobrecarga**, **encapsulamento**, **herança** e **polimorfismo**.
+
+Na prática, classes costumam se encaixar em algumas categorias comuns, que ajudam a entender a intenção de uma classe só pelo nome:
+
+| Categoria | Exemplos |
+|---|---|
+| Entidades | `Product`, `Client`, `Triangle` |
+| Serviços | `ProductService`, `ClientService`, `EmailService`, `StorageService` |
+| Controladores | `ProductController`, `ClientController` |
+| Utilitários | `Calculadora`, `Compactador` |
+| Outros | *views*, repositórios, gerenciadores, etc. |
+
+### 7.3 Pacotes: organizando classes em pastas
+
+Conforme um projeto cresce, faz sentido agrupar classes relacionadas dentro de **pacotes** — que, na prática, são pastas dentro de `src/main/java`. A regra de ouro: **o nome do pacote declarado no código precisa bater exatamente com o caminho da pasta onde o arquivo está.**
+
+> 💡 **Analogia:** se uma classe é um documento, um pacote é a gaveta do arquivo onde documentos do mesmo assunto ficam guardados juntos — uma gaveta para "entidades", outra para "aplicação", evitando que tudo fique solto misturado numa pasta só.
+
+No nosso problema, usamos dois pacotes:
+
+```
+src/main/java/
+├── entities/
+│   └── Triangle.java     → package entities;
+└── application/
+    └── Program.java      → package application;
+```
+
+- **`entities`** guarda a entidade principal do problema, o `Triangle`:
+
+  ```java
+  package entities;
+
+  public class Triangle {
+      public double a;
+      public double b;
+      public double c;
+  }
+  ```
+
+- **`application`** guarda o `Program`, que é onde o programa de fato roda (o `main`). Para o `Program` conseguir usar a classe `Triangle` — que mora em outro pacote —, é preciso **importá-la**:
+
+  ```java
+  import entities.Triangle;
+  ```
+
+Só depois desse `import` é que o `Program` passa a enxergar e conseguir usar `Triangle` no seu código.
+
+### 7.4 Instanciando objetos
+
+Agora vem um ponto que costuma confundir quem está começando: **declarar uma variável do tipo `Triangle` não é suficiente** para acessar os atributos dela.
+
+```java
+Triangle x, y;
+```
+
+Essa linha apenas diz "existem duas variáveis chamadas `x` e `y`, e ambas são do tipo `Triangle`" — mas nenhum triângulo de verdade foi criado ainda. Se você tentasse usar `x.a` agora, o programa não teria a quem se referir.
+
+O que falta é **instanciar** — criar de fato um objeto do tipo `Triangle` usando a palavra-chave `new`:
+
+```java
+x = new Triangle();
+y = new Triangle();
+```
+
+Só a partir do `new Triangle()` é que `x` (e depois `y`) passam a apontar para um objeto de verdade, com `a`, `b` e `c` de fato existindo e prontos para receber valores.
+
+> 💡 **Analogia:** declarar `Triangle x;` é como reservar uma etiqueta de nome vazia numa festa — o nome existe, mas ninguém foi cadastrado ainda. O `new Triangle()` é o exato momento em que uma pessoa real chega e é registrada sob aquela etiqueta. Antes disso, a etiqueta não representa ninguém.
+
+**A resolução completa do problema, agora usando a classe `Triangle`:**
+
+```java
+package application;
+
+import java.util.Scanner;
+import java.util.Locale;
+
+import entities.Triangle;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        Triangle x, y;
+        x = new Triangle();
+        y = new Triangle();
+
+        IO.println("Enter the measures of triangle X:");
+        x.a = sc.nextDouble();
+        x.b = sc.nextDouble();
+        x.c = sc.nextDouble();
+
+        IO.println("Enter the measures of triangle Y:");
+        y.a = sc.nextDouble();
+        y.b = sc.nextDouble();
+        y.c = sc.nextDouble();
+
+        double p = (x.a + x.b + x.c) / 2;
+        double areaX = Math.sqrt(p * (p - x.a) * (p - x.b) * (p - x.c));
+
+        p = (y.a + y.b + y.c) / 2;
+        double areaY = Math.sqrt(p * (p - y.a) * (p - y.b) * (p - y.c));
+
+        System.out.printf("Triangle X area: %.4f%n", areaX);
+        System.out.printf("Triangle Y area: %.4f%n", areaY);
+
+        if (areaX > areaY) {
+            System.out.println("Larger area: X");
+        } else {
+            System.out.println("Larger area: Y");
+        }
+    }
+}
+```
+
+Repare que `Program` continua com apenas **duas** variáveis (`x` e `y`), mas cada uma carrega três atributos dentro de si — o ganho de organização em relação à versão da seção 7.1 já fica evidente aqui: acessar `x.a`, `x.b`, `x.c` deixa claro, só de olhar o código, que esses três valores pertencem ao mesmo triângulo.
+
+> 💬 O `IO.println(...)` que aparece acima é um recurso mais recente do Java (a mesma classe `IO` do Java 25 que já apareceu antes no projeto) — funciona exatamente como `System.out.println(...)`, só que mais enxuto.
+
+### 7.5 Como objetos vivem na memória: Stack e Heap
+
+Essa é a peça que costuma fechar o mapa mental: **onde**, exatamente, o objeto criado com `new` fica guardado?
+
+Quando o Java executa `Triangle x, y;`, ele reserva dois espacinhos numa área de memória chamada **Stack** — a mesma área usada para guardar variáveis locais de um método enquanto ele está em execução. Até aqui, nada muda em relação a uma variável comum, como um `int` ou `double`.
+
+A diferença aparece quando instanciamos: `x = new Triangle()` cria o objeto de verdade em uma área de memória **diferente**, chamada **Heap** — uma região reservada especificamente para objetos criados dinamicamente durante a execução do programa (por isso "alocação dinâmica de memória": isso só acontece em tempo de execução, e não é algo que o compilador já sabe de antemão).
+
+> ⚠️ Vale registrar aqui um pequeno ajuste de terminologia: fica fácil confundir "**Stack**" com "**Static**" de ouvido — mas são conceitos diferentes. **Stack** é a memória de variáveis locais e chamadas de método (o que vale aqui); memória "estática" é outra área, reservada para atributos/variáveis marcados com a palavra-chave `static`, um assunto que ainda vamos ver mais à frente.
+
+O ponto mais importante de todos: **a variável `x`, na Stack, não guarda os três atributos do triângulo dentro dela.** Ela guarda apenas uma **referência** — um "endereço" que aponta para onde, lá no Heap, o objeto de verdade (com `a`, `b` e `c`) está armazenado.
+
+```
+Stack                              Heap
+┌─────────────┐                    ┌──────────────────────┐
+│ x  ●────────┼───────────────────▶│ Triangle              │
+├─────────────┤                    │ a = 3.0               │
+│ y  ●────────┼──────────┐         │ b = 4.0                │
+└─────────────┘          │         │ c = 5.0                │
+                          │         └──────────────────────┘
+                          │
+                          │         ┌──────────────────────┐
+                          └────────▶│ Triangle              │
+                                    │ a = 6.0               │
+                                    │ b = 6.0                │
+                                    │ c = 6.0                │
+                                    └──────────────────────┘
+```
+
+> 💡 **Analogia:** pense na Stack como um chaveiro e no Heap como um depósito de armários. A variável `x` não é o armário em si — ela é a **chave** pendurada no seu chaveiro, que aponta para um armário específico lá no depósito. Quando você escreve `x.a`, o Java usa essa chave para ir até o armário certo no depósito e pegar o valor guardado dentro dele. Duas chaves diferentes (`x` e `y`) podem, inclusive, abrir armários completamente distintos — cada instância (`new Triangle()`) cria um armário novo no Heap.
+
+Essa distinção entre "onde está a referência" (Stack) e "onde está o objeto de verdade" (Heap) é a base para entender, mais adiante, por que copiar uma variável de objeto não copia o objeto em si — mas isso é assunto para uma próxima aula.
+
+---
+
+## 8. Exercícios Resolvidos
 
 Exercícios práticos de fixação da **estrutura sequencial**, escritos no repositório de prática `java-estudos` (código-fonte à parte deste material teórico):
 
