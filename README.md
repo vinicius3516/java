@@ -1631,6 +1631,8 @@ Note como `product + string` (a concatenação em `"Product data: " + product`) 
 
 ## 10. Exercícios Resolvidos
 
+### Estrutura Sequencial
+
 Exercícios práticos de fixação da **estrutura sequencial**, escritos no repositório de prática `java-estudos` (código-fonte à parte deste material teórico):
 
 <details>
@@ -1701,4 +1703,97 @@ double total = pecaNumber1 * pecaValue1 + pecaNumber2 * pecaValue2;
 
 System.out.printf("VALOR A PAGAR: R$ %.2f", total);
 ```
+</details>
+
+### Orientação a Objetos
+
+Exercícios práticos do módulo de **Orientação a Objetos** (seção [7](#7-orientação-a-objetos)), escritos e mantidos diretamente neste projeto Maven local (`entities/` + `application/Program.java`).
+
+<details>
+<summary><strong>Exercício 1 — Área, perímetro e diagonal de um retângulo</strong></summary>
+
+**Enunciado:** ler os valores da largura e altura de um retângulo. Em seguida, mostrar na tela o valor de sua área, perímetro e diagonal.
+
+```mermaid
+classDiagram
+    class Rectangle {
+        -double width
+        -double height
+        +area() double
+        +perimeter() double
+        +diagonal() double
+    }
+```
+
+```java
+package entities;
+
+public class Rectangle {
+    public double width;
+    public double height;
+
+    public double area() {
+        return width * height;
+    }
+
+    public double perimeter() {
+        return 2 * (width + height);
+    }
+
+    public double diagonal() {
+        return Math.sqrt(Math.pow(width, 2.0) + Math.pow(height, 2.0));
+    }
+
+    public String toString() {
+        String quebra = System.lineSeparator();
+        return "AREA = "
+                + String.format("%.2f", area())
+                + quebra
+                + "PERIMETER = "
+                + String.format("%.2f", perimeter())
+                + quebra
+                + "DIAGONAL = "
+                + String.format("%.2f", diagonal());
+    }
+}
+```
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+import entities.Rectangle;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        Rectangle rectangle = new Rectangle();
+
+        IO.println("Enter rectangle width and height:");
+        rectangle.width = sc.nextDouble();
+        rectangle.height = sc.nextDouble();
+
+        IO.println(rectangle);
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Enter rectangle width and height:
+3.00
+4.00
+AREA = 12.00
+PERIMETER = 14.00
+DIAGONAL = 5.00
+```
+
+> 💡 **Método novo — `System.lineSeparator()`:** dentro do `toString()`, a quebra de linha entre `AREA`, `PERIMETER` e `DIAGONAL` usa `System.lineSeparator()` em vez de simplesmente `"\n"`. A diferença é que `"\n"` é sempre o caractere de nova linha do estilo Unix, enquanto `System.lineSeparator()` retorna **o separador de linha correto do sistema operacional onde o programa está rodando** (`\n` no Linux/Mac, `\r\n` no Windows) — deixando o código portável entre sistemas, em vez de fixar um único padrão.
 </details>
