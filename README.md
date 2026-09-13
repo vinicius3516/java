@@ -1895,3 +1895,108 @@ Updated data: Joao Silva, $ 5600.00
 
 > 💡 **Ponto de atenção:** a porcentagem afeta somente `grossSalary` (o bruto) — o `tax` permanece fixo. Por isso, ao recalcular `netSalary()` (`grossSalary - tax`) depois do reajuste, o líquido sobe de `5000.00` para `5600.00`: o aumento de 10% incidiu sobre os `6000.00` originais (`+600.00`), e não sobre o líquido já calculado.
 </details>
+
+<details>
+<summary><strong>Exercício 3 — Nota final e situação de aprovação de um aluno</strong></summary>
+
+**Enunciado:** ler o nome de um aluno e as três notas que ele obteve nos três trimestres do ano (primeiro trimestre vale 30 e o segundo e terceiro valem 35 cada). Ao final, mostrar qual a nota final do aluno no ano. Dizer também se o aluno está aprovado (`PASS`) ou não (`FAILED`) e, em caso negativo, quantos pontos faltam para o aluno obter o mínimo para ser aprovado (que é 60% da nota).
+
+```mermaid
+classDiagram
+    class Student {
+        -String name
+        -double note1
+        -double note2
+        -double note3
+        +totalNote() double
+        +passVerification(note double) String
+    }
+```
+
+```java
+package entities;
+
+public class Student {
+    public String name;
+    public double note1;
+    public double note2;
+    public double note3;
+
+    public double totalNote() {
+        return note1 + note2 + note3;
+    }
+
+    public String passVerification(double note) {
+        if (note >= 60) {
+            return "PASS";
+        } else {
+            double missing = 60 - note;
+            return "FAILED"
+                    + System.lineSeparator()
+                    + "MISSING "
+                    + String.format("%.2f", missing)
+                    + " POINTS";
+        }
+    }
+}
+```
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+import entities.Student;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        Student student = new Student();
+
+        IO.println("Entrada:");
+        student.name = sc.nextLine();
+        student.note1 = sc.nextDouble();
+        student.note2 = sc.nextDouble();
+        student.note3 = sc.nextDouble();
+
+        IO.println("Saida:");
+        IO.println("FINAL GRADE = " + String.format("%.2f", student.totalNote()));
+        IO.println(student.passVerification(student.totalNote()));
+
+        sc.close();
+    }
+}
+```
+
+**Saída (exemplo 1 — aprovado):**
+
+```
+Entrada:
+Alex Green
+27.00
+31.00
+32.00
+Saida:
+FINAL GRADE = 90.00
+PASS
+```
+
+**Saída (exemplo 2 — reprovado):**
+
+```
+Entrada:
+Alex Green
+17.00
+20.00
+15.00
+Saida:
+FINAL GRADE = 52.00
+FAILED
+MISSING 8.00 POINTS
+```
+
+> 💡 **Por que `totalNote()` só soma as três notas, sem multiplicar pelos pesos?** Porque os pesos (30/35/35) já definem a **pontuação máxima de cada trimestre**, e não um multiplicador — ou seja, cada nota digitada já é o número de pontos conquistados naquele trimestre (de um total de 30 ou 35 possíveis). Somando os três valores diretamente, o resultado já cai naturalmente numa escala de 0 a 100, que é o que os exemplos confirmam (`27 + 31 + 32 = 90`).
+</details>
