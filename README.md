@@ -47,7 +47,9 @@
    - [7.6 Criando métodos: reaproveitamento e delegação](#76-criando-métodos-reaproveitamento-e-delegação)
    - [7.7 Anatomia de um método](#77-anatomia-de-um-método)
    - [7.8 Representando classes em UML](#78-representando-classes-em-uml)
-9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
+   - [7.9 Outro exemplo prático: a classe Product](#79-outro-exemplo-prático-a-classe-product)
+   - [7.10 A superclasse Object e o método toString()](#710-a-superclasse-object-e-o-método-tostring)
+10. [Exercícios Resolvidos](#10-exercícios-resolvidos)
 
 ---
 
@@ -1400,7 +1402,234 @@ Comparando com o código Java: o compartimento do meio (`- a : double`, `- b : d
 
 ---
 
-## 9. Exercícios Resolvidos
+### 7.9 Outro exemplo prático: a classe Product
+
+**Problema:** fazer um programa que leia os dados de um produto em estoque (nome, preço e quantidade) e, em seguida:
+
+- mostre os dados do produto (nome, preço, quantidade e valor total em estoque);
+- realize uma **entrada** no estoque e mostre novamente os dados;
+- realize uma **saída** no estoque e mostre novamente os dados.
+
+Seguindo o mesmo raciocínio da seção [7.2](#72-o-que-é-uma-classe), o primeiro passo é projetar a classe que representa a entidade do problema — aqui, `Product` — antes de escrever o programa principal:
+
+```mermaid
+classDiagram
+    class Product {
+        -String name
+        -double price
+        -int quantity
+        +totalValueInStock() double
+        +addProducts(quantity int) void
+        +removeProducts(quantity int) void
+    }
+```
+
+Traduzindo o projeto UML para Java:
+
+```java
+package entities;
+
+public class Product {
+    public String name;
+    public double price;
+    public int quantity;
+
+    public double totalValueInStock() {
+        return quantity * price;
+    }
+
+    public void addProducts(int quantity) {
+        this.quantity += quantity;
+    }
+
+    public void removeProducts(int quantity) {
+        this.quantity -= quantity;
+    }
+}
+```
+
+**A palavra-chave `this`:** repare em `addProducts` e `removeProducts` — ambos recebem um parâmetro chamado `quantity`, só que a classe **já tem** um atributo com esse mesmo nome. Dentro do método, `quantity` sozinho passaria a se referir ao **parâmetro**, escondendo o atributo. `this` é a palavra reservada que representa uma **autorreferência ao próprio objeto** onde ela é usada — `this.quantity` diz explicitamente "o atributo `quantity` deste objeto", desambiguando o atributo do parâmetro de mesmo nome.
+
+> 💡 **Analogia:** imagine duas pessoas conversando e ambas se chamam "Alex". Se alguém disser apenas "Alex fez isso", fica ambíguo qual dos dois. Dizer "**eu**, Alex, fiz isso" (o equivalente a `this.quantity`) deixa claro que você está falando de si mesmo, e não da outra pessoa com o mesmo nome (o parâmetro).
+
+**O programa principal, numa primeira versão:**
+
+```java
+package application;
+
+import java.util.Scanner;
+import java.util.Locale;
+
+import entities.Product;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        Product product = new Product();
+
+        IO.println("Enter product data:");
+        IO.print("Name: ");
+        product.name = sc.nextLine();
+
+        IO.print("Price: ");
+        product.price = sc.nextDouble();
+
+        IO.print("Quantity: ");
+        product.quantity = sc.nextInt();
+
+        IO.println(product.toString());
+    }
+}
+```
+
+Só que, ao rodar esse código, a última linha imprime algo bem inesperado, em vez dos dados do produto:
+
+```
+entities.Product@4554617c
+```
+
+Por que isso acontece — e como resolver — é o assunto da próxima seção.
+
+### 7.10 A superclasse Object e o método toString()
+
+Em Java, **toda classe é, por baixo dos panos, uma subclasse de `Object`** — mesmo que você nunca escreva isso explicitamente. É por isso que qualquer objeto, mesmo um `Product` criado do zero, já "nasce" com alguns métodos prontos, herdados de `Object`:
+
+| Método | O que faz |
+|---|---|
+| `getClass()` | Retorna o tipo (a classe) do objeto |
+| `equals(Object)` | Compara se o objeto é igual a outro |
+| `hashCode()` | Retorna um código hash do objeto |
+| `toString()` | Converte o objeto para uma representação em `String` |
+
+Por enquanto, o foco é só no `toString()`. O texto estranho `entities.Product@4554617c` visto na seção anterior é exatamente a implementação **padrão** de `toString()` herdada de `Object`: por padrão, ela não sabe nada sobre o que faz sentido mostrar de um `Product` — ela só devolve o nome do pacote + classe (`entities.Product`) seguido do endereço do objeto no Heap, em hexadecimal (`@4554617c`). É técnica, mas não é útil para ler.
+
+> 💡 **Analogia:** é como se toda pessoa, ao nascer, já ganhasse um crachá padrão só com um número de identificação genérico. Esse crachá funciona, mas não diz nada de útil sobre a pessoa. Para o crachá realmente representar alguém (mostrar nome, preço, quantidade...), é preciso **personalizá-lo** — e é exatamente isso que "sobrescrever" o `toString()` faz.
+
+A solução é **sobrescrever** (*override*) o `toString()` dentro da própria classe `Product`, dizendo explicitamente como ela deve se converter em texto:
+
+```java
+package entities;
+
+public class Product {
+    public String name;
+    public double price;
+    public int quantity;
+
+    public double totalValueInStock() {
+        return quantity * price;
+    }
+
+    public void addProducts(int quantity) {
+        this.quantity += quantity;
+    }
+
+    public void removeProducts(int quantity) {
+        this.quantity -= quantity;
+    }
+
+    public String toString() {
+        return name
+            + ", $ "
+            + String.format("%.2f", price)
+            + ", "
+            + quantity
+            + " units, Total: $ "
+            + String.format("%.2f", totalValueInStock());
+    }
+}
+```
+
+Repare que o retorno já vem formatado — inclusive as casas decimais dos valores `double`, usando `String.format("%.2f", ...)` (o mesmo `%.2f` visto lá em [3.5](#35-saída-de-dados-systemout), só que aqui aplicado a uma string em vez de impresso direto).
+
+Com o `toString()` sobrescrito, `IO.println(product.toString())` passa a imprimir a saída formatada corretamente. Mais que isso: **não é nem preciso chamar `toString()` explicitamente** — `IO.println(product)` sozinho já produz o mesmo resultado, porque o Java chama `toString()` automaticamente sempre que um objeto precisa virar texto (por exemplo, ao ser impresso ou concatenado com `+`):
+
+```
+Enter product data:
+Name: TV
+Price: 900.00
+Quantity: 10
+TV, $ 900.00, 10 units, Total: $ 9000.00
+```
+
+**O programa completo, já usando `addProducts`/`removeProducts` para simular entrada e saída de estoque:**
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+import entities.Product;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        Product product = new Product();
+
+        IO.println("Enter product data: ");
+
+        IO.print("Name: ");
+        product.name = sc.nextLine();
+
+        IO.print("Price: ");
+        product.price = sc.nextDouble();
+
+        IO.print("Quantity in stock: ");
+        product.quantity = sc.nextInt();
+
+        IO.println();
+        IO.println("Product data: " + product);
+
+        IO.println();
+        IO.print("Enter the number of products to be added in stock: ");
+        int quantity = sc.nextInt();
+        product.addProducts(quantity);
+
+        IO.println();
+        IO.println("Updated data: " + product);
+
+        IO.println();
+        IO.print("Enter the number of products to be removed from stock: ");
+        quantity = sc.nextInt();
+        product.removeProducts(quantity);
+
+        IO.println();
+        IO.println("Updated data: " + product);
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Enter product data:
+Name: Tv
+Price: 900.00
+Quantity in stock: 10
+
+Product data: Tv, $ 900.00, 10 units, Total: $ 9000.00
+
+Enter the number of products to be added in stock: 5
+
+Updated data: Tv, $ 900.00, 15 units, Total: $ 13500.00
+
+Enter the number of products to be removed from stock: 2
+
+Updated data: Tv, $ 900.00, 13 units, Total: $ 11700.00
+```
+
+Note como `product + string` (a concatenação em `"Product data: " + product`) também aciona o `toString()` sobrescrito automaticamente — reforçando por que sobrescrever esse método é tão útil: qualquer lugar do código que precisar "mostrar" o objeto já se beneficia, sem esforço extra.
+
+---
+
+## 10. Exercícios Resolvidos
 
 Exercícios práticos de fixação da **estrutura sequencial**, escritos no repositório de prática `java-estudos` (código-fonte à parte deste material teórico):
 
