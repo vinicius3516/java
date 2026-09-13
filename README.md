@@ -1797,3 +1797,101 @@ DIAGONAL = 5.00
 
 > 💡 **Método novo — `System.lineSeparator()`:** dentro do `toString()`, a quebra de linha entre `AREA`, `PERIMETER` e `DIAGONAL` usa `System.lineSeparator()` em vez de simplesmente `"\n"`. A diferença é que `"\n"` é sempre o caractere de nova linha do estilo Unix, enquanto `System.lineSeparator()` retorna **o separador de linha correto do sistema operacional onde o programa está rodando** (`\n` no Linux/Mac, `\r\n` no Windows) — deixando o código portável entre sistemas, em vez de fixar um único padrão.
 </details>
+
+<details>
+<summary><strong>Exercício 2 — Salário líquido e reajuste de funcionário</strong></summary>
+
+**Enunciado:** ler os dados de um funcionário (nome, salário bruto e imposto). Em seguida, mostrar os dados do funcionário (nome e salário líquido). Em seguida, aumentar o salário do funcionário com base em uma porcentagem dada (somente o salário bruto é afetado pela porcentagem) e mostrar novamente os dados do funcionário.
+
+```mermaid
+classDiagram
+    class Employee {
+        -String name
+        -double grossSalary
+        -double tax
+        +netSalary() double
+        +increaseSalary(percentage double) void
+    }
+```
+
+```java
+package entities;
+
+public class Employee {
+    public String name;
+    public double grossSalary;
+    public double tax;
+
+    public double netSalary() {
+        return grossSalary - tax;
+    }
+
+    public void increaseSalary(double percentage) {
+        double increaseValue = this.grossSalary * percentage / 100;
+        this.grossSalary += increaseValue;
+    }
+
+    public String toString() {
+        return name
+                + ", $ "
+                + String.format("%.2f", netSalary());
+    }
+}
+```
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+import entities.Employee;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        Employee employee = new Employee();
+
+        IO.print("Name: ");
+        employee.name = sc.nextLine();
+
+        IO.print("Gross salary: ");
+        employee.grossSalary = sc.nextDouble();
+
+        IO.print("Tax: ");
+        employee.tax = sc.nextDouble();
+
+        IO.println();
+        IO.println("Employee: " + employee);
+
+        IO.println();
+        IO.print("Which percentage to increase salary? ");
+        double percentage = sc.nextDouble();
+        employee.increaseSalary(percentage);
+
+        IO.println();
+        IO.println("Updated data: " + employee);
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Name: Joao Silva
+Gross salary: 6000.00
+Tax: 1000.00
+
+Employee: Joao Silva, $ 5000.00
+
+Which percentage to increase salary? 10.0
+
+Updated data: Joao Silva, $ 5600.00
+```
+
+> 💡 **Ponto de atenção:** a porcentagem afeta somente `grossSalary` (o bruto) — o `tax` permanece fixo. Por isso, ao recalcular `netSalary()` (`grossSalary - tax`) depois do reajuste, o líquido sobe de `5000.00` para `5600.00`: o aumento de 10% incidiu sobre os `6000.00` originais (`+600.00`), e não sobre o líquido já calculado.
+</details>
