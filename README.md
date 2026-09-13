@@ -44,7 +44,10 @@
    - [7.3 Pacotes: organizando classes em pastas](#73-pacotes-organizando-classes-em-pastas)
    - [7.4 Instanciando objetos](#74-instanciando-objetos)
    - [7.5 Como objetos vivem na memória: Stack e Heap](#75-como-objetos-vivem-na-memória-stack-e-heap)
-8. [Exercícios Resolvidos](#8-exercícios-resolvidos)
+   - [7.6 Criando métodos: reaproveitamento e delegação](#76-criando-métodos-reaproveitamento-e-delegação)
+   - [7.7 Anatomia de um método](#77-anatomia-de-um-método)
+   - [7.8 Representando classes em UML](#78-representando-classes-em-uml)
+9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
 
@@ -1245,7 +1248,159 @@ Essa distinção entre "onde está a referência" (Stack) e "onde está o objeto
 
 ---
 
-## 8. Exercícios Resolvidos
+### 7.6 Criando métodos: reaproveitamento e delegação
+
+Relembrando a seção [7.2](#72-o-que-é-uma-classe): uma classe é composta por **atributos** e **métodos**. Até agora, a classe `Triangle` só tinha atributos (`a`, `b`, `c`) — todo o cálculo de área continuava sendo feito "de fora", dentro do `Program`. Isso gera dois problemas, ambos resolvidos ao criar um **método** dentro da própria classe `Triangle`:
+
+- **Delegação de responsabilidade:** calcular a área é uma responsabilidade do próprio triângulo, não do programa principal. O `Program` não deveria precisar saber *como* uma área é calculada — só deveria poder *pedir* essa área a quem sabe calculá-la.
+- **Repetição de código:** além de estar no lugar errado, o cálculo da fórmula de Heron estava duplicado — uma vez para `x`, outra para `y`. Com dois triângulos isso ainda é tolerável, mas imagine precisar da área de dezenas de triângulos: copiar e colar a mesma fórmula repetidamente não é escalável.
+
+> 💡 **Analogia:** pense num restaurante. O cliente (`Program`) não entra na cozinha para preparar o próprio prato — ele **delega** essa responsabilidade ao chef (`Triangle`), que é quem sabe a receita. O cliente só pede "me dá a área desse triângulo" e recebe o resultado pronto, sem precisar conhecer a fórmula por trás.
+
+**Solução — adicionando o método `area()` à classe `Triangle`:**
+
+```java
+package entities;
+
+public class Triangle {
+    public double a;
+    public double b;
+    public double c;
+
+    public double area() {
+        double p = (a + b + c) / 2;
+        return Math.sqrt(p * (p - a) * (p - b) * (p - c));
+    }
+}
+```
+
+**O `Program` agora só precisa pedir a área a cada objeto:**
+
+```java
+package application;
+
+import java.util.Scanner;
+import java.util.Locale;
+
+import entities.Triangle;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        Triangle x, y;
+        x = new Triangle();
+        y = new Triangle();
+
+        IO.println("Enter the measures of triangle X:");
+        x.a = sc.nextDouble();
+        x.b = sc.nextDouble();
+        x.c = sc.nextDouble();
+
+        IO.println("Enter the measures of triangle Y:");
+        y.a = sc.nextDouble();
+        y.b = sc.nextDouble();
+        y.c = sc.nextDouble();
+
+        double areaX = x.area();
+        double areaY = y.area();
+
+        System.out.printf("Triangle X area: %.4f%n", areaX);
+        System.out.printf("Triangle Y area: %.4f%n", areaY);
+
+        if (areaX > areaY) {
+            System.out.println("Larger area: X");
+        } else {
+            System.out.println("Larger area: Y");
+        }
+    }
+}
+```
+
+**Discussão — quais os benefícios de calcular a área através de um método da classe `Triangle`?**
+
+1. **Reaproveitamento de código:** o código repetido (calcular a área de X e de Y) desaparece do programa principal — a fórmula existe em um único lugar, dentro do próprio `Triangle`.
+2. **Delegação de responsabilidades:** quem sabe calcular a área de um triângulo é o próprio triângulo. A lógica do cálculo não deveria estar em nenhum outro lugar.
+
+> 🎯 Vale grifar esse segundo ponto: **delegação de responsabilidade** é um dos princípios mais cobrados na hora de escrever código limpo e escalável — cada classe deve cuidar daquilo que é de sua própria responsabilidade, e nada além disso. É uma mentalidade que vale a pena carregar para todo o resto do curso.
+
+### 7.7 Anatomia de um método
+
+Voltando ao código de `Triangle`, dá pra abrir cada peça da classe e do método `area()` em detalhe:
+
+```java
+package entities;                                    // pacote da classe
+
+public class Triangle {                              // nome da classe
+    public double a;                                  // atributos da classe
+    public double b;                                  // (o "public" indica que o atributo
+    public double c;                                  //  pode ser usado em outros arquivos)
+
+    public double area() {                            // ver quebra abaixo
+        double p = (a + b + c) / 2.0;                 // corpo do método
+        return Math.sqrt(p * (p - a) * (p - b) * (p - c));  // corpo do método
+    }
+}
+```
+
+A assinatura `public double area() { ... }` sozinha já concentra várias informações — a mesma estrutura de método vista lá em [6.2 (Funções)](#62-funções), agora dentro de uma classe:
+
+| Peça | Neste método | O que significa |
+|---|---|---|
+| `public` | `public` | Modificador de acesso — permite que o método seja chamado a partir de outros arquivos/classes |
+| `double` | `double` | Tipo do dado que o método **retorna** (se o método não retornasse nada, seria `void`) |
+| `area` | `area` | Nome do método |
+| `()` | `()` (vazio) | Lista de parâmetros do método — aqui está vazia porque `area()` não recebe nenhum dado de fora; ele já tem tudo que precisa (`a`, `b`, `c`) nos próprios atributos da classe |
+| `{ ... }` | corpo do método | O bloco de código que efetivamente executa quando o método é chamado |
+
+> 💡 Note a diferença para `max(int x, int y, int z)`, visto em [6.2](#62-funções): aquele método *precisava* de parâmetros porque não pertencia a nenhuma classe com esses dados já guardados. Já `area()` não precisa de parâmetros porque **já está dentro do objeto** cujos atributos ele usa — outro reflexo direto da delegação de responsabilidade vista em [7.6](#76-criando-métodos-reaproveitamento-e-delegação).
+
+### 7.8 Representando classes em UML
+
+**UML** (*Unified Modeling Language*) é uma linguagem visual usada para representar a estrutura de um sistema — uma forma de desenhar/planejar classes num diagrama, antes ou junto da escrita do código propriamente dito. Ainda não é o foco do curso agora, mas vale já ir se acostumando com a notação, porque ela aparece com frequência em documentação e discussões de projeto.
+
+Um diagrama de classe em UML é representado como uma caixa dividida em três compartimentos:
+
+```
+┌─────────────────────────┐
+│      Nome da Classe      │
+├─────────────────────────┤
+│      Atributos            │
+├─────────────────────────┤
+│      Métodos              │
+└─────────────────────────┘
+```
+
+Para os atributos e métodos, a UML usa símbolos no lugar de palavras como `public`/`private` para indicar visibilidade:
+
+| Símbolo | Equivalente em Java | Significado |
+|---|---|---|
+| `-` | `private` | Privado — só acessível de dentro da própria classe |
+| `+` | `public` | Público — acessível de qualquer lugar |
+| `#` | `protected` | Protegido — assunto para quando virmos herança |
+
+- Um **atributo** é escrito como `- nome : tipo` — por exemplo, `- a : double`.
+- Um **método** é escrito como `+ nome() : tipoDeRetorno` — por exemplo, `+ area() : double`.
+
+**O projeto da classe `Triangle` em UML:**
+
+```mermaid
+classDiagram
+    class Triangle {
+        -double a
+        -double b
+        -double c
+        +area() double
+    }
+```
+
+Comparando com o código Java: o compartimento do meio (`- a : double`, `- b : double`, `- c : double`) corresponde aos três atributos da classe, e o compartimento de baixo (`+ area() : double`) corresponde ao método `area()`, que é público e retorna um `double`. O professor mencionou que vamos explorar bem mais esse tipo de projeto em UML ao longo do curso — por enquanto, o importante é reconhecer que é só **outra forma de representar a mesma estrutura** já vista em código.
+
+---
+
+## 9. Exercícios Resolvidos
 
 Exercícios práticos de fixação da **estrutura sequencial**, escritos no repositório de prática `java-estudos` (código-fonte à parte deste material teórico):
 
