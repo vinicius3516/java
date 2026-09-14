@@ -49,6 +49,7 @@
    - [7.8 Representando classes em UML](#78-representando-classes-em-uml)
    - [7.9 Outro exemplo prático: a classe Product](#79-outro-exemplo-prático-a-classe-product)
    - [7.10 A superclasse Object e o método toString()](#710-a-superclasse-object-e-o-método-tostring)
+   - [7.11 Membros estáticos](#711-membros-estáticos)
 10. [Exercícios Resolvidos](#10-exercícios-resolvidos)
 
 ---
@@ -1626,6 +1627,161 @@ Updated data: Tv, $ 900.00, 13 units, Total: $ 11700.00
 ```
 
 Note como `product + string` (a concatenação em `"Product data: " + product`) também aciona o `toString()` sobrescrito automaticamente — reforçando por que sobrescrever esse método é tão útil: qualquer lugar do código que precisar "mostrar" o objeto já se beneficia, sem esforço extra.
+
+### 7.11 Membros estáticos
+
+Este é o tópico que mais gera confusão no início — então antes de qualquer código, vale fixar a **pergunta-chave** que resolve 90% da dúvida:
+
+> ❓ **Essa informação (ou comportamento) pertence a UM objeto específico, ou é a mesma coisa não importa quem pergunte?**
+>
+> - Se depende de **qual objeto** você está olhando → é um **membro de instância** (o que já vínhamos usando: `x.a`, `product.price`, `employee.grossSalary`...).
+> - Se é igual **independente de qualquer objeto** → é um **membro estático** (também chamado de **membro de classe**).
+
+**Definição:** um membro estático (atributo ou método marcado com `static`) pertence **à classe em si**, não a nenhuma instância dela. Por isso, ele não precisa — e nem pede — que você crie um objeto (`new`) para usá-lo: ele é chamado diretamente pelo **nome da classe**.
+
+> 💡 **Analogias do dia a dia:**
+> - **Uma constante universal**, tipo a velocidade da luz ou o valor de PI: não faz sentido perguntar "qual é o PI *deste* círculo" — PI é o mesmo para todo círculo que existe. Ele não é uma característica de *um* objeto, é um fato compartilhado por todos.
+> - **Uma calculadora de bolso**: quando você aperta `√` (raiz quadrada), o resultado não depende de "qual calculadora" fez a conta — é sempre o mesmo cálculo, universal. É por isso que `Math.sqrt(9)` não exige `new Math()`: a operação matemática não pertence a nenhum objeto específico, ela só *existe*.
+> - **Um contador de senha de atendimento**: o painel eletrônico que mostra "última senha chamada: 042" não pertence a nenhum cliente — pertence ao sistema da fila como um todo. Todo cliente que olha vê o mesmo número, e ele é atualizado independente de qual cliente está sendo atendido.
+
+**Onde isso aparece na prática (as duas aplicações mais comuns):**
+
+| Uso comum | Exemplo |
+|---|---|
+| Classes utilitárias — funções que não dependem do estado de nenhum objeto | `Math.sqrt(x)`, `Math.pow(x, y)` |
+| Declaração de constantes — valores fixos, iguais para todo mundo que usa a classe | `public static final double PI = 3.14159;` |
+
+> 💡 **Sobre o `final`:** o modificador `final` (visto pela primeira vez aqui) significa "não pode ser reatribuído depois de inicializado" — ou seja, declara uma **constante**. Sozinho, `final` já impede que o valor mude; combinado com `static`, você ganha um valor **único, compartilhado e imutável** para toda a classe — exatamente o que uma constante como `PI` precisa ser.
+
+**Um esclarecimento importante:** uma classe pode ter **quantos membros estáticos quiser**, livremente misturados com membros de instância — não existe limite de "só um". O que é verdade é o oposto: **basta um único membro estático** para que ele, individualmente, já possa ser chamado sem depender de instância — os demais membros da classe (estáticos ou não) não são afetados por isso.
+
+#### O problema exemplo: circunferência e volume a partir do raio
+
+**Enunciado:** ler um valor numérico (raio) e mostrar a circunferência e o volume de uma esfera daquele raio, além do valor de PI com duas casas decimais.
+
+```
+Enter radius: 3.0
+Circumference: 18.85
+Volume: 113.10
+PI value: 3.14
+```
+
+O professor resolveu esse problema em **três versões**, e é exatamente essa progressão que revela onde o `static` se encaixa de verdade.
+
+**Versão 1 — tudo dentro do `Program` (funciona, mas no lugar errado):**
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+    public static final double PI = 3.14159;
+
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter radius: ");
+        double radius = sc.nextDouble();
+
+        double c = circumference(radius);
+        double v = volume(radius);
+
+        System.out.printf("Circumference: %.2f%n", c);
+        System.out.printf("Volume: %.2f%n", v);
+        System.out.printf("PI value: %.2f%n", PI);
+
+        sc.close();
+    }
+
+    public static double circumference(double radius) {
+        return 2.0 * PI * radius;
+    }
+
+    public static double volume(double radius) {
+        return 4.0 * PI * radius * radius * radius / 3.0;
+    }
+}
+```
+
+> ⚠️ **Por que `circumference` e `volume` também precisam ser `static` aqui?** Porque `main` é `static`, e um método estático **não consegue chamar membros de instância da própria classe diretamente** — só consegue chamar outros membros estáticos. Faz sentido: um método estático roda sem nenhum objeto "dono" em mãos, então ele não tem como saber *de qual instância* pegar um atributo ou método de instância. Ele só enxerga o que pertence à classe como um todo.
+
+Essa versão funciona, mas mistura, na mesma classe `Program`, a lógica de "rodar o programa" com a lógica de "calcular fórmulas geométricas" — o mesmo problema de domínio errado já visto lá em [7.1](#71-motivação-o-problema-sem-orientação-a-objetos) e [7.6](#76-criando-métodos-reaproveitamento-e-delegação): quem deveria saber calcular circunferência e volume não é o `Program`.
+
+**Versão 2 — delegando para uma classe `Calculator`, com membros de instância:**
+
+```java
+package util;
+
+public class Calculator {
+    public final double PI = 3.14159;
+
+    public double circumference(double radius) {
+        return 2.0 * PI * radius;
+    }
+
+    public double volume(double radius) {
+        return 4.0 * PI * radius * radius * radius / 3.0;
+    }
+}
+```
+
+```java
+Calculator calc = new Calculator();
+
+System.out.print("Enter radius: ");
+double radius = sc.nextDouble();
+
+double c = calc.circumference(radius);
+double v = calc.volume(radius);
+
+System.out.printf("Circumference: %.2f%n", c);
+System.out.printf("Volume: %.2f%n", v);
+System.out.printf("PI value: %.2f%n", calc.PI);
+```
+
+Agora a responsabilidade está no lugar certo (delegação, igual seção [7.6](#76-criando-métodos-reaproveitamento-e-delegação)) — mas repare que precisamos criar `calc = new Calculator()` mesmo sem nenhum motivo real para isso: `PI`, `circumference()` e `volume()` **nunca variam de uma instância de `Calculator` para outra**. Criar dez objetos `Calculator` diferentes não muda em nada o resultado de `circumference(3.0)`. Esse é exatamente o sinal de alerta de que esses membros deveriam ser **estáticos**, não de instância.
+
+**Versão 3 — `Calculator` com membros estáticos (a versão "correta"):**
+
+```java
+package util;
+
+public class Calculator {
+    public static final double PI = 3.14159;
+
+    public static double circumference(double radius) {
+        return 2.0 * PI * radius;
+    }
+
+    public static double volume(double radius) {
+        return 4.0 * PI * radius * radius * radius / 3.0;
+    }
+}
+```
+
+```java
+System.out.print("Enter radius: ");
+double radius = sc.nextDouble();
+
+double c = Calculator.circumference(radius);
+double v = Calculator.volume(radius);
+
+System.out.printf("Circumference: %.2f%n", c);
+System.out.printf("Volume: %.2f%n", v);
+System.out.printf("PI value: %.2f%n", Calculator.PI);
+```
+
+Essa é a melhor combinação das duas versões anteriores: a lógica continua **delegada** para `Calculator` (não mistura com `Program`), mas agora é chamada direto por `Calculator.circumference(radius)` — sem a cerimônia de `new Calculator()` para algo que nunca dependeu de estado nenhum de objeto.
+
+| | Instância (`x.metodo()`) | Estático (`Classe.metodo()`) |
+|---|---|---|
+| Precisa de `new`? | Sim | Não |
+| Faz sentido quando... | o resultado depende dos dados **daquele objeto específico** (`triangle.area()` depende de `a`, `b`, `c` *daquele* triângulo) | o resultado é **sempre igual**, para qualquer chamada, e não depende de estado nenhum guardado num objeto |
+
+> 💬 **Sobre "classe estática":** as anotações mencionam que uma classe só com membros estáticos "pode ser uma classe estática, que não pode ser instanciada". Vale um ajuste fino: em Java, `static` não é uma palavra-chave válida para uma classe de nível superior como `Calculator` (isso existe para classes *aninhadas*, um assunto futuro) — o que existe, na prática, é um **padrão de projeto** chamado **classe utilitária**: uma classe que, por convenção, só tem membros estáticos e nunca é pensada para ser instanciada (exatamente o papel que `Calculator` e a própria `Math` do Java cumprem).
 
 ---
 
