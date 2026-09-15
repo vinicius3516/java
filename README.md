@@ -51,6 +51,7 @@
    - [7.10 A superclasse Object e o método toString()](#710-a-superclasse-object-e-o-método-tostring)
    - [7.11 Membros estáticos](#711-membros-estáticos)
    - [7.12 Construtores](#712-construtores)
+   - [7.13 A palavra-chave this](#713-a-palavra-chave-this)
 10. [Exercícios Resolvidos](#10-exercícios-resolvidos)
 
 ---
@@ -1896,6 +1897,48 @@ A saída é idêntica à da versão anterior (seção [7.10](#710-a-superclasse-
 > 💡 É por isso que a linha `Product p = new Product();` citada nas anotações só é válida enquanto a classe **não tiver** nenhum construtor customizado — no momento em que `Product` ganhou o construtor de três parâmetros, essa forma "vazia" deixou de compilar.
 
 **Prévia — sobrecarga de construtores:** as anotações também adiantam que é possível declarar **mais de um construtor na mesma classe** (por exemplo, um `Product()` sem parâmetros convivendo com o `Product(String, double, int)`), desde que cada um tenha uma lista de parâmetros diferente. Isso se chama **sobrecarga** e é o próximo tópico do módulo — por enquanto, fica só o mapa de que essa porta existe.
+
+### 7.13 A palavra-chave this
+
+Essa aula não mexeu em código novo — o `this` já vinha aparecendo desde [7.9](#79-outro-exemplo-prático-a-classe-product) e [7.12](#712-construtores); o objetivo aqui foi **parar e consolidar o conceito** por trás do que já estávamos usando na prática.
+
+**Definição:** `this` é a palavra reservada que **referencia o próprio objeto** — o objeto dentro do qual o código que contém o `this` está executando no momento.
+
+**Os dois usos comuns:**
+
+1. **Diferenciar atributos de variáveis locais** — já visto em [7.9](#79-outro-exemplo-prático-a-classe-product) e [7.12](#712-construtores): quando um parâmetro (ou variável local) tem o mesmo nome de um atributo, `this.atributo` deixa explícito que você está falando do atributo do objeto, e não do parâmetro que está "por cima" dele naquele escopo.
+
+2. **Passar o próprio objeto como argumento** numa chamada de método ou construtor — um uso novo, que ainda não tínhamos precisado. Serve para um objeto "se entregar" (passar uma referência de si mesmo) para outro método ou objeto usar:
+
+   ```java
+   public class Pessoa {
+       private String nome;
+
+       public Pessoa(String nome) {
+           this.nome = nome;
+       }
+
+       public void cumprimentar(Recepcionista recepcionista) {
+           recepcionista.registrarVisita(this); // "this" = esta própria Pessoa
+       }
+   }
+
+   public class Recepcionista {
+       public void registrarVisita(Pessoa visitante) {
+           System.out.println("Visitante registrado: " + visitante);
+       }
+   }
+   ```
+
+   > 💡 **Analogia:** é como um visitante, ao chegar na recepção, entregar seu próprio crachá para ser registrado — `this` é literalmente "eu mesmo", entregue como argumento para quem precisa de uma referência ao objeto que está chamando o método.
+
+**Por baixo dos panos — o que `this` tem a ver com a memória (revendo [7.5](#75-como-objetos-vivem-na-memória-stack-e-heap)):**
+
+Quando instanciamos `Product product = new Product("TV", 1500.0, 0);`, os valores `"TV"`, `1500.0` e `0` são recebidos pelos **parâmetros do construtor** — que, assim como os parâmetros de qualquer método, existem apenas **temporariamente**, no escopo do construtor (Stack), enquanto ele está executando.
+
+É a linha `this.name = name;` (e as equivalentes para os outros atributos) que faz esses valores **saírem** desse espaço temporário do construtor e **entrarem de fato** no espaço de armazenamento permanente do objeto, lá no Heap. Sem esse `this.atributo = parametro`, os valores recebidos existiriam só durante a execução do construtor e desapareceriam assim que ele terminasse — o objeto ficaria com seus atributos vazios (nos valores padrão do tipo).
+
+> 💡 **Analogia:** retomando o chaveiro/depósito de [7.5](#75-como-objetos-vivem-na-memória-stack-e-heap) — os parâmetros do construtor são como itens que um visitante traz na mão até o balcão (temporário, na Stack). `this.atributo = parametro` é o ato de efetivamente guardar esses itens dentro do armário do objeto no depósito (Heap). Se ninguém guardar, os itens ficam na mão do visitante e somem quando ele for embora (quando o construtor terminar de executar).
 
 ---
 
