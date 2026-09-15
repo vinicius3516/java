@@ -2156,3 +2156,67 @@ MISSING 8.00 POINTS
 
 > 💡 **Por que `totalNote()` só soma as três notas, sem multiplicar pelos pesos?** Porque os pesos (30/35/35) já definem a **pontuação máxima de cada trimestre**, e não um multiplicador — ou seja, cada nota digitada já é o número de pontos conquistados naquele trimestre (de um total de 30 ou 35 possíveis). Somando os três valores diretamente, o resultado já cai naturalmente numa escala de 0 a 100, que é o que os exemplos confirmam (`27 + 31 + 32 = 90`).
 </details>
+
+<details>
+<summary><strong>Exercício 4 — Conversão de dólar para real, com IOF</strong></summary>
+
+**Enunciado:** ler a cotação do dólar e um valor em dólares a ser comprado por uma pessoa em reais. Informar quantos reais a pessoa vai pagar pelos dólares, considerando ainda que a pessoa terá que pagar 6% de IOF sobre o valor em dólar. Criar uma classe `CurrencyConverter` para ser responsável pelos cálculos.
+
+```mermaid
+classDiagram
+    class CurrencyConverter {
+        +double iof$
+        +converter(reais double, dolar double)$ double
+    }
+```
+
+```java
+package entities;
+
+public class CurrencyConverter {
+    public static double iof = 1.06;
+
+    public static double converter(double reais, double dolar) {
+        return (reais * dolar * iof);
+    }
+}
+```
+
+```java
+package application;
+
+import entities.CurrencyConverter;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        IO.print("What is the dollar price? ");
+        double dolar = sc.nextDouble();
+
+        IO.print("How many dollars will be bought? ");
+        double reais = sc.nextDouble();
+
+        System.out.printf("Amount to be paid in reais = %.2f", CurrencyConverter.converter(dolar, reais));
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+What is the dollar price? 3.10
+How many dollars will be bought? 200.00
+Amount to be paid in reais = 657.20
+```
+
+> ⚠️ **Ponto de atenção — nomes de parâmetros trocados:** em `CurrencyConverter.converter(double reais, double dolar)`, o primeiro parâmetro se chama `reais` mas na prática recebe a **cotação do dólar**, e o segundo se chama `dolar` mas recebe a **quantidade de dólares comprados** — o oposto do que os nomes sugerem. O cálculo dá certo porque multiplicação não liga para a ordem (`reais * dolar * iof` é o mesmo valor não importa qual variável carrega qual número), mas o código fica enganoso de se ler — quem olha `converter(double reais, double dolar)` espera o contrário do que realmente acontece. Vale de lição: **o nome do parâmetro é a documentação mais próxima que o método tem** — nomeá-lo errado não quebra a execução, mas engana quem lê depois (inclusive você mesmo, no futuro).
+>
+> 💡 Esse exercício também é uma boa reafirmação da seção [7.11 (Membros estáticos)](#711-membros-estáticos): nem `iof` nem `converter()` dependem de qual "conversor" está sendo usado — o resultado é sempre o mesmo para os mesmos números —, por isso fazem sentido como `static`, chamados direto por `CurrencyConverter.converter(...)`, sem precisar de `new`.
+</details>
