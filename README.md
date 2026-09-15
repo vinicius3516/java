@@ -50,6 +50,7 @@
    - [7.9 Outro exemplo prático: a classe Product](#79-outro-exemplo-prático-a-classe-product)
    - [7.10 A superclasse Object e o método toString()](#710-a-superclasse-object-e-o-método-tostring)
    - [7.11 Membros estáticos](#711-membros-estáticos)
+   - [7.12 Construtores](#712-construtores)
 10. [Exercícios Resolvidos](#10-exercícios-resolvidos)
 
 ---
@@ -1782,6 +1783,119 @@ Essa é a melhor combinação das duas versões anteriores: a lógica continua *
 | Faz sentido quando... | o resultado depende dos dados **daquele objeto específico** (`triangle.area()` depende de `a`, `b`, `c` *daquele* triângulo) | o resultado é **sempre igual**, para qualquer chamada, e não depende de estado nenhum guardado num objeto |
 
 > 💬 **Sobre "classe estática":** as anotações mencionam que uma classe só com membros estáticos "pode ser uma classe estática, que não pode ser instanciada". Vale um ajuste fino: em Java, `static` não é uma palavra-chave válida para uma classe de nível superior como `Calculator` (isso existe para classes *aninhadas*, um assunto futuro) — o que existe, na prática, é um **padrão de projeto** chamado **classe utilitária**: uma classe que, por convenção, só tem membros estáticos e nunca é pensada para ser instanciada (exatamente o papel que `Calculator` e a própria `Math` do Java cumprem).
+
+### 7.12 Construtores
+
+> 🧭 Entramos aqui num novo bloco dentro de Orientação a Objetos — **construtores, `this`, sobrecarga e encapsulamento** — que aprofunda o que uma classe pode fazer além de atributos e métodos simples (voltando ao teaser da seção [7.2](#72-o-que-é-uma-classe)). Este tópico cobre o primeiro deles: o **construtor**.
+
+Um **construtor** é uma operação especial da classe que executa automaticamente **no exato momento em que o objeto é instanciado** (no `new`). Os dois usos mais comuns:
+
+- **Inicializar os atributos** do objeto já na criação, em vez de precisar setá-los um por um depois.
+- **Obrigar (ou permitir) que o objeto receba dados/dependências logo na instanciação** — um mecanismo conhecido como *injeção de dependência*, que veremos melhor mais adiante.
+
+> 💡 **Analogia:** pense num formulário de admissão de funcionário — a empresa **exige** nome e CPF já no ato do cadastro; não existe "funcionário cadastrado sem nome". O construtor faz exatamente isso com um objeto: define quais dados são obrigatórios *já no nascimento* dele, em vez de deixar o objeto existir num estado incompleto para só depois preencher os campos.
+
+**Retomando o exemplo do `Product`** (visto em [7.9](#79-outro-exemplo-prático-a-classe-product)/[7.10](#710-a-superclasse-object-e-o-método-tostring)): até agora, criar um produto exigia três passos separados — `new Product()` e depois `product.name = ...`, `product.price = ...`, `product.quantity = ...`, um de cada vez. Nada impedia esquecer de preencher um deles. Com um construtor, os três valores passam a ser exigidos **juntos**, no próprio `new`:
+
+```java
+package entities;
+
+public class Product {
+    public String name;
+    public double price;
+    public int quantity;
+
+    public Product(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    public double totalValueInStock() {
+        return quantity * price;
+    }
+
+    public void addProducts(int quantity) {
+        this.quantity += quantity;
+    }
+
+    public void removeProducts(int quantity) {
+        this.quantity -= quantity;
+    }
+
+    public String toString() {
+        return name
+            + ", $ "
+            + String.format("%.2f", price)
+            + ", "
+            + quantity
+            + " units, Total: $ "
+            + String.format("%.2f", totalValueInStock());
+    }
+}
+```
+
+Repare que o construtor usa **`this`** exatamente pelo mesmo motivo já visto em [7.9](#79-outro-exemplo-prático-a-classe-product): os parâmetros (`name`, `price`, `quantity`) têm o mesmo nome dos atributos da classe, e `this.name` desambigua "o atributo deste objeto" do parâmetro recebido.
+
+**O `Program` agora cria o produto já com os dados prontos:**
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+import entities.Product;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        IO.println("Enter product data: ");
+
+        IO.print("Name: ");
+        String name = sc.nextLine();
+
+        IO.print("Price: ");
+        double price = sc.nextDouble();
+
+        IO.print("Quantity in stock: ");
+        int quantity = sc.nextInt();
+
+        Product product = new Product(name, price, quantity);
+
+        IO.println();
+        IO.println("Product data: " + product);
+
+        IO.println();
+        IO.print("Enter the number of products to be added in stock: ");
+        quantity = sc.nextInt();
+        product.addProducts(quantity);
+
+        IO.println();
+        IO.println("Updated data: " + product);
+
+        IO.println();
+        IO.print("Enter the number of products to be removed from stock: ");
+        quantity = sc.nextInt();
+        product.removeProducts(quantity);
+
+        IO.println();
+        IO.println("Updated data: " + product);
+
+        sc.close();
+    }
+}
+```
+
+A saída é idêntica à da versão anterior (seção [7.10](#710-a-superclasse-object-e-o-método-tostring)) — o que mudou foi **como** o objeto nasce, não o que ele faz depois.
+
+**O construtor padrão:** se uma classe não declara nenhum construtor próprio, o Java disponibiliza automaticamente um **construtor padrão** sem parâmetros — é o que permitia escrever `Product p = new Product();` nas versões anteriores deste material. Mas atenção a uma pegadinha comum: **assim que você declara qualquer construtor próprio** (como o `Product(String name, double price, int quantity)` acima), **o construtor padrão deixa de existir** — `new Product()` sem argumentos passaria a dar erro de compilação, porque agora o único construtor disponível exige os três parâmetros.
+
+> 💡 É por isso que a linha `Product p = new Product();` citada nas anotações só é válida enquanto a classe **não tiver** nenhum construtor customizado — no momento em que `Product` ganhou o construtor de três parâmetros, essa forma "vazia" deixou de compilar.
+
+**Prévia — sobrecarga de construtores:** as anotações também adiantam que é possível declarar **mais de um construtor na mesma classe** (por exemplo, um `Product()` sem parâmetros convivendo com o `Product(String, double, int)`), desde que cada um tenha uma lista de parâmetros diferente. Isso se chama **sobrecarga** e é o próximo tópico do módulo — por enquanto, fica só o mapa de que essa porta existe.
 
 ---
 
