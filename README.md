@@ -2166,7 +2166,7 @@ MISSING 8.00 POINTS
 classDiagram
     class CurrencyConverter {
         +double iof$
-        +converter(reais double, dolar double)$ double
+        +converter(exchangeRate double, dollarAmount double)$ double
     }
 ```
 
@@ -2176,8 +2176,8 @@ package entities;
 public class CurrencyConverter {
     public static double iof = 1.06;
 
-    public static double converter(double reais, double dolar) {
-        return (reais * dolar * iof);
+    public static double converter(double exchangeRate, double dollarAmount) {
+        return (exchangeRate * dollarAmount * iof);
     }
 }
 ```
@@ -2196,12 +2196,12 @@ public class Program {
         Scanner sc = new Scanner(System.in);
 
         IO.print("What is the dollar price? ");
-        double dolar = sc.nextDouble();
+        double exchangeRate = sc.nextDouble();
 
         IO.print("How many dollars will be bought? ");
-        double reais = sc.nextDouble();
+        double dollarAmount = sc.nextDouble();
 
-        System.out.printf("Amount to be paid in reais = %.2f", CurrencyConverter.converter(dolar, reais));
+        System.out.printf("Amount to be paid in reais = %.2f", CurrencyConverter.converter(exchangeRate, dollarAmount));
 
         sc.close();
     }
@@ -2216,7 +2216,5 @@ How many dollars will be bought? 200.00
 Amount to be paid in reais = 657.20
 ```
 
-> ⚠️ **Ponto de atenção — nomes de parâmetros trocados:** em `CurrencyConverter.converter(double reais, double dolar)`, o primeiro parâmetro se chama `reais` mas na prática recebe a **cotação do dólar**, e o segundo se chama `dolar` mas recebe a **quantidade de dólares comprados** — o oposto do que os nomes sugerem. O cálculo dá certo porque multiplicação não liga para a ordem (`reais * dolar * iof` é o mesmo valor não importa qual variável carrega qual número), mas o código fica enganoso de se ler — quem olha `converter(double reais, double dolar)` espera o contrário do que realmente acontece. Vale de lição: **o nome do parâmetro é a documentação mais próxima que o método tem** — nomeá-lo errado não quebra a execução, mas engana quem lê depois (inclusive você mesmo, no futuro).
->
 > 💡 Esse exercício também é uma boa reafirmação da seção [7.11 (Membros estáticos)](#711-membros-estáticos): nem `iof` nem `converter()` dependem de qual "conversor" está sendo usado — o resultado é sempre o mesmo para os mesmos números —, por isso fazem sentido como `static`, chamados direto por `CurrencyConverter.converter(...)`, sem precisar de `new`.
 </details>
