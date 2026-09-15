@@ -52,6 +52,7 @@
    - [7.11 Membros estáticos](#711-membros-estáticos)
    - [7.12 Construtores](#712-construtores)
    - [7.13 A palavra-chave this](#713-a-palavra-chave-this)
+   - [7.14 Sobrecarga](#714-sobrecarga)
 10. [Exercícios Resolvidos](#10-exercícios-resolvidos)
 
 ---
@@ -1939,6 +1940,128 @@ Quando instanciamos `Product product = new Product("TV", 1500.0, 0);`, os valore
 É a linha `this.name = name;` (e as equivalentes para os outros atributos) que faz esses valores **saírem** desse espaço temporário do construtor e **entrarem de fato** no espaço de armazenamento permanente do objeto, lá no Heap. Sem esse `this.atributo = parametro`, os valores recebidos existiriam só durante a execução do construtor e desapareceriam assim que ele terminasse — o objeto ficaria com seus atributos vazios (nos valores padrão do tipo).
 
 > 💡 **Analogia:** retomando o chaveiro/depósito de [7.5](#75-como-objetos-vivem-na-memória-stack-e-heap) — os parâmetros do construtor são como itens que um visitante traz na mão até o balcão (temporário, na Stack). `this.atributo = parametro` é o ato de efetivamente guardar esses itens dentro do armário do objeto no depósito (Heap). Se ninguém guardar, os itens ficam na mão do visitante e somem quando ele for embora (quando o construtor terminar de executar).
+
+### 7.14 Sobrecarga
+
+**Sobrecarga** (*overload*) é o recurso que permite uma classe oferecer **mais de uma operação — método ou construtor — com o mesmo nome**, desde que cada uma tenha uma **lista de parâmetros diferente** (em quantidade e/ou tipo). Já tínhamos deixado essa porta aberta lá na prévia da seção [7.12](#712-construtores) — agora é a vez de usá-la de verdade.
+
+> 💡 **Analogia:** pense num mesmo formulário de cadastro que existe em duas versões — uma completa (nome, preço e quantidade) e uma simplificada (só nome e preço, pra quando ainda não se sabe o estoque inicial). É o mesmo "formulário `Product`", só que com campos obrigatórios diferentes. Quem preenche escolhe a versão que tem os dados disponíveis no momento — e o Java decide automaticamente qual construtor usar, olhando para quantos (e quais tipos de) argumentos foram passados no `new`.
+
+**Proposta de melhoria para o `Product`:** criar um construtor **opcional**, que recebe apenas nome e preço — deixando a quantidade em estoque inicializada em `0` por padrão:
+
+```java
+package entities;
+
+public class Product {
+    public String name;
+    public double price;
+    public int quantity;
+
+    public Product(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    public Product(String name, double price) {
+        this.name = name;
+        this.price = price;
+    }
+
+    public double totalValueInStock() {
+        return quantity * price;
+    }
+
+    public void addProducts(int quantity) {
+        this.quantity += quantity;
+    }
+
+    public void removeProducts(int quantity) {
+        this.quantity -= quantity;
+    }
+
+    public String toString() {
+        return name
+            + ", $ "
+            + String.format("%.2f", price)
+            + ", "
+            + quantity
+            + " units, Total: $ "
+            + String.format("%.2f", totalValueInStock());
+    }
+}
+```
+
+Repare que o segundo construtor **não atribui nada a `this.quantity`** — e mesmo assim o atributo não fica "quebrado" ou indefinido. Isso funciona porque, em Java, todo atributo numérico que não recebe valor explícito já nasce com um **valor padrão** (`int` começa em `0`, `double` em `0.0`, `boolean` em `false`, referências como `String` em `null`). Como `quantity` é `int`, ele simplesmente começa em `0` quando esse construtor de dois parâmetros é usado.
+
+**No `Program`, basta chamar o construtor com a quantidade de argumentos que se tem disponível:**
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+import entities.Product;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        IO.println("Enter product data: ");
+
+        IO.print("Name: ");
+        String name = sc.nextLine();
+
+        IO.print("Price: ");
+        double price = sc.nextDouble();
+
+        Product product = new Product(name, price);
+
+        IO.println();
+        IO.println("Product data: " + product);
+
+        IO.println();
+        IO.print("Enter the number of products to be added in stock: ");
+        int quantity = sc.nextInt();
+        product.addProducts(quantity);
+
+        IO.println();
+        IO.println("Updated data: " + product);
+
+        IO.println();
+        IO.print("Enter the number of products to be removed from stock: ");
+        quantity = sc.nextInt();
+        product.removeProducts(quantity);
+
+        IO.println();
+        IO.println("Updated data: " + product);
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Enter product data:
+Name: Tv
+Price: 900.00
+
+Product data: Tv, $ 900.00, 0 units, Total: $ 0.00
+
+Enter the number of products to be added in stock: 5
+
+Updated data: Tv, $ 900.00, 5 units, Total: $ 4500.00
+
+Enter the number of products to be removed from stock: 2
+
+Updated data: Tv, $ 900.00, 3 units, Total: $ 2700.00
+```
+
+`new Product(name, price)` usa automaticamente o construtor de dois parâmetros — o Java escolhe qual dos dois construtores chamar **só de olhar quantos argumentos foram passados**, sem precisar de nenhuma indicação extra. Note também que, mesmo com `quantity` começando em `0`, `totalValueInStock()` continua funcionando normalmente (`0 * price = 0.00`) — nenhum outro método precisou saber que esse produto foi criado "sem estoque inicial".
 
 ---
 
