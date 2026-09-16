@@ -53,6 +53,7 @@
    - [7.12 Construtores](#712-construtores)
    - [7.13 A palavra-chave this](#713-a-palavra-chave-this)
    - [7.14 Sobrecarga](#714-sobrecarga)
+   - [7.15 Encapsulamento](#715-encapsulamento)
 10. [Exercícios Resolvidos](#10-exercícios-resolvidos)
 
 ---
@@ -2062,6 +2063,105 @@ Updated data: Tv, $ 900.00, 3 units, Total: $ 2700.00
 ```
 
 `new Product(name, price)` usa automaticamente o construtor de dois parâmetros — o Java escolhe qual dos dois construtores chamar **só de olhar quantos argumentos foram passados**, sem precisar de nenhuma indicação extra. Note também que, mesmo com `quantity` começando em `0`, `totalValueInStock()` continua funcionando normalmente (`0 * price = 0.00`) — nenhum outro método precisou saber que esse produto foi criado "sem estoque inicial".
+
+### 7.15 Encapsulamento
+
+**Encapsulamento** é o princípio de **esconder os detalhes de implementação** de uma classe, expondo para fora apenas operações seguras — operações que garantem que o objeto permaneça sempre num **estado consistente**.
+
+> 🎯 **Regra de ouro:** o objeto deve sempre estar em um estado consistente, e é **a própria classe** — não quem a usa — a responsável por garantir isso.
+
+A regra geral básica que coloca essa ideia em prática tem duas partes:
+
+1. Um objeto **não deve expor nenhum atributo diretamente** — todos os atributos passam a ser `private`.
+2. O acesso a esses atributos, quando necessário, acontece por meio de métodos **get** (para ler) e **set** (para alterar).
+
+**Sintaxe geral de um get/set:**
+
+```java
+public <retorno> <nome> (<parâmetro ou não>) {
+    <operação>
+}
+```
+
+Get e set costumam ficar logo após os construtores, na classe. O ponto de atenção principal na hora de criá-los é o **nome**, que sempre segue o padrão *CamelCase*:
+
+- `getName()` — sem parâmetro, retorna o valor do atributo.
+- `setName(String name)` — recebe um parâmetro, altera o valor do atributo.
+
+Nada impede de colocar alguma lógica extra dentro de um get/set, mas o padrão de mercado mais comum é eles apenas **lerem ou alterarem** o valor de um atributo, sem regra de negócio embutida — a regra de negócio (como veremos já já) fica melhor em métodos próprios, com nome que descreva a ação.
+
+**Aplicando ao `Product`:** os três atributos passam a ser `private`, e ganham `get`/`set` (quando fizer sentido):
+
+```java
+package entities;
+
+public class Product {
+    private String name;
+    private double price;
+    private int quantity;
+
+    public Product(String name, double price, int quantity) {
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    public Product(String name, double price) {
+        this.name = name;
+        this.price = price;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public double totalValueInStock() {
+        return quantity * price;
+    }
+
+    public void addProducts(int quantity) {
+        this.quantity += quantity;
+    }
+
+    public void removeProducts(int quantity) {
+        this.quantity -= quantity;
+    }
+
+    public String toString() {
+        return name
+            + ", $ "
+            + String.format("%.2f", price)
+            + ", "
+            + quantity
+            + " units, Total: $ "
+            + String.format("%.2f", totalValueInStock());
+    }
+}
+```
+
+> 🔍 **Reparou em algo que falta?** Existe `getQuantity()`, mas **não existe** `setQuantity(int quantity)`. Isso não é esquecimento — é a "regra de ouro" do encapsulamento em ação: se qualquer código externo pudesse simplesmente fazer `product.setQuantity(-50)`, nada garantiria que o estoque continuasse fazendo sentido. Em vez disso, a *única* forma de alterar a quantidade é através de `addProducts(...)` e `removeProducts(...)` — métodos que **descrevem a intenção da mudança**, e é a própria classe `Product` quem decide como a quantidade pode variar. Expor um `get` para ler não custa nada; expor um `set` "livre" para um dado que precisa de regras é abrir mão do controle que o encapsulamento existe para proteger.
+>
+> 💡 **Analogia:** pense num estoque físico de verdade — ninguém entra no depósito e simplesmente risca um novo número no papel de contagem (`setQuantity`). Toda mudança passa por um processo formal: uma nota de **entrada** ou uma nota de **saída** (`addProducts`/`removeProducts`), que fica registrado e faz sentido. O encapsulamento é isso: a classe decide **quais portas de entrada** existem para mexer nos seus dados, em vez de deixar todo mundo mexer diretamente em qualquer coisa.
+
+Um detalhe que vale comemorar: o `Program` **não precisou mudar nada** depois dessa refatoração — ele já vinha usando o construtor e os métodos `addProducts`/`removeProducts` desde as seções [7.12](#712-construtores) e [7.9](#79-outro-exemplo-prático-a-classe-product), nunca acessando `product.name` ou `product.quantity` diretamente. Isso é a delegação de responsabilidade (seção [7.6](#76-criando-métodos-reaproveitamento-e-delegação)) e o encapsulamento andando juntos: quando a classe já expõe as operações certas desde o início, torná-la mais rígida por dentro (`private`) não quebra quem já a estava usando corretamente por fora.
+
+> 💬 O professor adiantou que, na próxima aula, o próprio ambiente de desenvolvimento (IDE) vai **gerar automaticamente** esses `get`/`set` (e até os construtores) — sem precisar digitá-los à mão como foi feito aqui.
 
 ---
 
