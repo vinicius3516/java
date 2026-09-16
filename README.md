@@ -54,6 +54,7 @@
    - [7.13 A palavra-chave this](#713-a-palavra-chave-this)
    - [7.14 Sobrecarga](#714-sobrecarga)
    - [7.15 Encapsulamento](#715-encapsulamento)
+   - [7.16 Modificadores de acesso](#716-modificadores-de-acesso)
 10. [Exercícios Resolvidos](#10-exercícios-resolvidos)
 
 ---
@@ -2162,6 +2163,32 @@ public class Product {
 Um detalhe que vale comemorar: o `Program` **não precisou mudar nada** depois dessa refatoração — ele já vinha usando o construtor e os métodos `addProducts`/`removeProducts` desde as seções [7.12](#712-construtores) e [7.9](#79-outro-exemplo-prático-a-classe-product), nunca acessando `product.name` ou `product.quantity` diretamente. Isso é a delegação de responsabilidade (seção [7.6](#76-criando-métodos-reaproveitamento-e-delegação)) e o encapsulamento andando juntos: quando a classe já expõe as operações certas desde o início, torná-la mais rígida por dentro (`private`) não quebra quem já a estava usando corretamente por fora.
 
 > 💬 O professor adiantou que, na próxima aula, o próprio ambiente de desenvolvimento (IDE) vai **gerar automaticamente** esses `get`/`set` (e até os construtores) — sem precisar digitá-los à mão como foi feito aqui.
+
+### 7.16 Modificadores de acesso
+
+A seção [7.15](#715-encapsulamento) já usou `private` e `public`, mas sem parar para explicar formalmente **quem enxerga o quê**. Em Java existem **quatro níveis de acesso**, do mais restrito ao mais aberto:
+
+| Modificador | Quem pode acessar |
+|---|---|
+| `private` | Só a **própria classe** |
+| *(nenhum — padrão)* | A própria classe **e** qualquer classe do **mesmo pacote** |
+| `protected` | O mesmo que o padrão, **mais** subclasses em pacotes diferentes (assunto de herança, ainda por vir) |
+| `public` | Qualquer classe, de qualquer pacote (com uma exceção rara: módulos que não exportam o pacote) |
+
+> 💡 **Analogia — círculos de convivência:** pense nos quatro níveis como círculos sociais cada vez mais largos: `private` é o seu **diário pessoal** (só você lê); *(padrão)* é a **sua casa** (você e quem mora junto — as classes do mesmo pacote); `protected` é a **família estendida** (parentes que moram longe — subclasses em outros pacotes — ainda têm acesso, mas estranhos não); `public` é uma **publicação aberta**, qualquer um pode ler.
+
+Repare que cada nível **inclui** o anterior — `protected` enxerga tudo que o padrão enxerga, e por aí vai. É uma escada de acesso cada vez mais permissiva: `private` → *(padrão)* → `protected` → `public`.
+
+**A tabela oficial de acessibilidade** (a mesma do [tutorial da Oracle](https://docs.oracle.com/javase/tutorial/java/javaOO/accesscontrol.html), reproduzida aqui como referência rápida):
+
+| Modificador | Mesma classe | Mesmo pacote | Subclasse (pacote diferente) | Qualquer lugar |
+|---|:---:|:---:|:---:|:---:|
+| `private` | ✅ | ❌ | ❌ | ❌ |
+| *(padrão)* | ✅ | ✅ | ❌ | ❌ |
+| `protected` | ✅ | ✅ | ✅ | ❌ |
+| `public` | ✅ | ✅ | ✅ | ✅ |
+
+Um jeito prático de decidir qual usar, no dia a dia: comece sempre pelo mais restrito que resolve o problema (`private`) e só abra mão de restrição (`protected`, depois `public`) quando surgir uma necessidade real de acesso vindo de fora. É a mesma mentalidade da seção [7.15](#715-encapsulamento) — quanto menos exposto, mais fácil garantir que o objeto permaneça consistente.
 
 ---
 
