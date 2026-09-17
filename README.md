@@ -2625,3 +2625,154 @@ Amount to be paid in reais = 657.20
 
 > 💡 Esse exercício também é uma boa reafirmação da seção [7.11 (Membros estáticos)](#711-membros-estáticos): nem `iof` nem `converter()` dependem de qual "conversor" está sendo usado — o resultado é sempre o mesmo para os mesmos números —, por isso fazem sentido como `static`, chamados direto por `CurrencyConverter.converter(...)`, sem precisar de `new`.
 </details>
+
+<details>
+<summary><strong>Exercício 5 — Cadastro de conta bancária, com depósito e saque</strong></summary>
+
+**Enunciado:** em um banco, para se cadastrar uma conta bancária, é necessário informar o número da conta, o nome do titular, e o valor de depósito inicial (opcional — se não houver, o saldo inicial é zero). O número da conta nunca pode ser alterado depois de aberta; o nome do titular pode. O saldo não pode ser alterado livremente: só aumenta por depósito, e só diminui por saque — e cada saque cobra uma taxa fixa de $ 5.00 (a conta pode ficar negativa, se o saldo não for suficiente para cobrir saque + taxa). Fazer um programa que cadastre a conta (com depósito inicial opcional), realize um depósito e depois um saque, mostrando os dados da conta após cada operação.
+
+```mermaid
+classDiagram
+    class AccountBank {
+        -int number
+        -String name
+        -double balance
+        -double tax
+        +AccountBank(number int, name String)
+        +Deposit(depositValue double) void
+        +Withdraw(withdrawValue double) void
+    }
+```
+
+```java
+package entities;
+
+public class AccountBank {
+    private int number;
+    private String name;
+    private double balance;
+    private double tax = 5.00;
+
+    public AccountBank(int number, String name) {
+        this.number = number;
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "Account " + number +
+                ", Holder: " + name +
+                ", Balance: $ " + String.format("%.2f", balance);
+    }
+
+    public void Deposit(double depositValue) {
+        this.balance += depositValue;
+    }
+
+    public void Withdraw(double withdrawValue) {
+        this.balance -= withdrawValue + tax;
+    }
+}
+```
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+import entities.AccountBank;
+
+public class Program {
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        char deposit;
+        double depositValue = 0.0;
+
+        IO.print("Enter account number: ");
+        int number = sc.nextInt();
+        sc.nextLine();
+        IO.print("Enter account holder: ");
+        String name = sc.nextLine();
+
+        IO.print("Is there na initial deposit (y/n)? ");
+        deposit = sc.next().charAt(0);
+
+        if (deposit == 'y') {
+            IO.print("Enter initial deposit value: ");
+            depositValue = sc.nextDouble();
+        }
+
+        AccountBank account = new AccountBank(number, name);
+        account.Deposit(depositValue);
+
+        IO.println(" ");
+        IO.println("Account data:");
+        IO.println(account.toString());
+
+        IO.println(" ");
+        IO.print("Enter a deposit value: ");
+        double newDeposit = sc.nextDouble();
+
+        account.Deposit(newDeposit);
+        IO.println("Updated account data:");
+        IO.println(account.toString());
+
+        IO.println(" ");
+        IO.print("Enter a withdraw value: ");
+        double withdraw = sc.nextDouble();
+
+        account.Withdraw(withdraw);
+        IO.println("Updated account data:");
+        IO.println(account.toString());
+
+        sc.close();
+    }
+}
+```
+
+**Saída (exemplo 1 — com depósito inicial):**
+
+```
+Enter account number: 8532
+Enter account holder: Alex Green
+Is there na initial deposit (y/n)? y
+Enter initial deposit value: 500.00
+
+Account data:
+Account 8532, Holder: Alex Green, Balance: $ 500.00
+
+Enter a deposit value: 200.00
+Updated account data:
+Account 8532, Holder: Alex Green, Balance: $ 700.00
+
+Enter a withdraw value: 300.00
+Updated account data:
+Account 8532, Holder: Alex Green, Balance: $ 395.00
+```
+
+**Saída (exemplo 2 — sem depósito inicial, terminando negativo):**
+
+```
+Enter account number: 7801
+Enter account holder: Maria Brown
+Is there na initial deposit (y/n)? n
+
+Account data:
+Account 7801, Holder: Maria Brown, Balance: $ 0.00
+
+Enter a deposit value: 200.00
+Updated account data:
+Account 7801, Holder: Maria Brown, Balance: $ 200.00
+
+Enter a withdraw value: 198.00
+Updated account data:
+Account 7801, Holder: Maria Brown, Balance: $ -3.00
+```
+
+> 💡 **`@Override` — uma anotação nova:** o `toString()` já tinha sido sobrescrito antes (seção [7.10](#710-a-superclasse-object-e-o-método-tostring)), mas agora aparece com `@Override` logo acima. Essa anotação não muda o comportamento do método — ela é uma instrução **para o compilador**, avisando "este método pretende sobrescrever um método da superclasse". Se por engano o nome ou os parâmetros não baterem exatamente com o método original de `Object`, o compilador acusa erro na hora, em vez de você criar sem querer um método novo (que nunca seria chamado no lugar do original). É uma rede de segurança de baixo custo, e o padrão de mercado é sempre usá-la ao sobrescrever um método.
+>
+> ⚠️ **Convenção de nomes:** `Deposit` e `Withdraw` estão com a primeira letra maiúscula — mas a convenção Java (a mesma citada para get/set na seção [7.15](#715-encapsulamento)) é *camelCase* para métodos, começando sempre com letra minúscula: `deposit`/`withdraw`. Maiúscula no começo (`PascalCase`) é a convenção reservada para **nomes de classe** (`AccountBank`, `Product`...). O código funciona normalmente do mesmo jeito — Java não obriga essa convenção —, mas seguir o padrão evita estranhar (ou estranhar em código de terceiros) mais adiante.
+</details>
