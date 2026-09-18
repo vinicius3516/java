@@ -57,6 +57,7 @@
    - [7.16 Modificadores de acesso](#716-modificadores-de-acesso)
 8. [Comportamento de Memória, Arrays e Listas](#8-comportamento-de-memória-arrays-e-listas)
    - [8.1 Tipos referência vs. tipos valor](#81-tipos-referência-vs-tipos-valor)
+   - [8.2 Desalocação de memória: garbage collector e escopo local](#82-desalocação-de-memória-garbage-collector-e-escopo-local)
 9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
@@ -2322,6 +2323,142 @@ Essa regra de "precisa inicializar antes de usar" vale para **variáveis locais*
 | `y = x;` significa | "`y` passa a apontar para onde `x` aponta" | "`y` recebe uma **cópia** de `x`" |
 | Onde vive | Objeto instanciado no Heap (a referência fica na Stack) | "Objeto" (valor) fica direto na Stack |
 | Quando é desalocado | Quando não é mais utilizado, num momento futuro, pelo *garbage collector* | Imediatamente, quando o escopo de execução onde foi declarado termina |
+
+### 8.2 Desalocação de memória: garbage collector e escopo local
+
+A última linha da tabela em [8.1](#81-tipos-referência-vs-tipos-valor) já adiantou que classes e primitivos são "limpos" da memória de formas diferentes. Esta seção detalha **como** isso acontece em cada caso.
+
+#### Garbage collector
+
+O **garbage collector** é um processo que **automatiza o gerenciamento de memória** de um programa em execução. Ele monitora os objetos alocados dinamicamente pelo programa (no **Heap**) e desaloca automaticamente aqueles que **não estão mais sendo utilizados** — ou seja, objetos para os quais não existe mais nenhuma referência apontando.
+
+> 💡 **Analogia:** pense num depósito (o Heap) e numa equipe de limpeza que passa periodicamente verificando quais armários **não têm mais nenhuma chave** em circulação apontando para eles. Um armário sem dono é esvaziado e liberado para reuso — é exatamente isso que o garbage collector faz com objetos sem referência.
+
+**Exemplo — um objeto perdendo sua última referência:**
+
+```java
+Product p1, p2;
+
+p1 = new Product("TV", 900.00, 0);
+p2 = new Product("Mouse", 30.00, 0);
+```
+
+```
+Stack                              Heap
+┌─────────────┐                    ┌───────────────────────────┐
+│ p1 ●────────┼───────────────────▶│ Product "TV", 900, 0        │
+├─────────────┤                    └───────────────────────────┘
+│ p2 ●────────┼───────────────────▶┌───────────────────────────┐
+└─────────────┘                    │ Product "Mouse", 30, 0      │
+                                    └───────────────────────────┘
+```
+
+Até aqui, dois objetos distintos, cada um com sua própria referência. Agora observe o que acontece com um simples `p1 = p2;`:
+
+```java
+p1 = p2;
+```
+
+```
+Stack                              Heap
+┌─────────────┐                    ┌───────────────────────────┐
+│ p1 ●────────┼──────────┐         │ Product "TV", 900, 0        │  ⚠ sem nenhuma referência!
+├─────────────┤          │         └───────────────────────────┘     (candidato do garbage collector)
+│ p2 ●────────┼──────────┼────────▶┌───────────────────────────┐
+└─────────────┘          └────────▶│ Product "Mouse", 30, 0      │
+                                    └───────────────────────────┘
+```
+
+`p1` (que apontava para `"TV"`) passa a apontar para o **mesmo** lugar que `p2` — a mesma mecânica de `p2 = p1` já vista em [8.1](#81-tipos-referência-vs-tipos-valor), só que na direção contrária. O objeto `"TV"` continua fisicamente no Heap, mas **nenhuma variável no programa aponta mais para ele** — ele se tornou inacessível. É exatamente esse tipo de objeto "órfão" que o garbage collector identifica e desaloca, num momento futuro que o programa não controla diretamente.
+
+#### Desalocação por escopo local
+
+Enquanto objetos no Heap dependem do garbage collector, **variáveis locais** (na Stack) seguem uma regra bem mais simples e imediata: elas são desalocadas **assim que o escopo onde foram declaradas termina** — sem esperar por nenhum processo externo.
+
+```java
+void method1() {
+    int x = 10;
+    if (x > 0) {
+        int y = 20;
+    }
+    System.out.println(x);
+}
+```
+
+Repare que `x` e `y` vivem em escopos **aninhados**: `y` só existe dentro do bloco do `if`, que por sua vez está dentro do escopo de `method1`.
+
+```
+Stack
+┌────────────────────────────────┐
+│ escopo de method1                │
+│  x = 10                          │
+│  ┌────────────────────────┐     │
+│  │ escopo do if             │     │
+│  │  y = 20                  │     │
+│  └────────────────────────┘     │
+└────────────────────────────────┘
+```
+
+Assim que a execução sai do bloco do `if` (ou seja, chega no `}` que o fecha), `y` é desalocado imediatamente — antes mesmo do `System.out.println(x)` rodar:
+
+```
+Stack
+┌────────────────────────────────┐
+│ escopo de method1                │
+│  x = 10                          │
+└────────────────────────────────┘
+```
+
+`x` continua vivo, porque o escopo de `method1` ainda está em execução. Quando `method1()` também terminar, `x` desaparece junto — não sobra nada na Stack.
+
+> 💡 **Analogia:** pense em escopos como salas dentro de salas — ao sair de uma sala menor (o `if`) e fechar a porta atrás de você, tudo que estava só naquela sala (o `y`) já não existe mais. A sala maior (`method1`) continua de pé até você sair dela também.
+
+#### Outro exemplo: quando um objeto "sobrevive" ao escopo que o criou
+
+Esse exemplo conecta as duas regras acima — o que acontece quando um **método retorna um objeto**?
+
+```java
+void method1() {
+    Product p = method2();
+    System.out.println(p.getName());
+}
+
+Product method2() {
+    Product prod = new Product("TV", 900.0, 0);
+    return prod;
+}
+```
+
+Enquanto `method2()` ainda está executando, existem **dois escopos aninhados na Stack** — o de `method1` (com `p`, ainda sem valor definitivo) e, dentro dele, o de `method2` (com `prod`, apontando para o objeto recém-criado no Heap):
+
+```
+Stack                                          Heap
+┌─────────────────────────────────┐            ┌─────────────────────┐
+│ escopo de method1                 │            │ Product               │
+│  p                                │            │ "TV", 900.0, 0         │
+│  ┌────────────────────────────┐  │            └─────────────────────┘
+│  │ escopo de method2            │  │                     ▲
+│  │  prod ●───────────────────────┼──┼─────────────────────┘
+│  └────────────────────────────┘  │
+└─────────────────────────────────┘
+```
+
+Quando `method2()` executa `return prod;` e termina, o **escopo de `method2` é desalocado** — a variável `prod` deixa de existir. Se essa fosse a única referência ao objeto `"TV"`, ele viraria lixo (como no exemplo do garbage collector acima). Mas não é: o `return` copiou a referência para dentro de `p`, no escopo de `method1`, que continua vivo:
+
+```
+Stack                                          Heap
+┌─────────────────────────────────┐            ┌─────────────────────┐
+│ escopo de method1                 │            │ Product               │
+│  p ●───────────────────────────┼──────────────▶│ "TV", 900.0, 0         │
+└─────────────────────────────────┘            └─────────────────────┘
+```
+
+O objeto **sobrevive** à saída de `method2()` porque, no instante em que `prod` deixou de existir, já havia outra referência (`p`) apontando para o mesmo lugar. É por isso que "retornar um objeto" de um método funciona — o objeto nunca dependeu do escopo que o criou, só das referências que apontam para ele.
+
+#### Resumo
+
+- Objetos alocados dinamicamente (no Heap), quando **não possuem mais nenhuma referência** apontando para eles, serão desalocados pelo **garbage collector** — num momento futuro, fora do controle direto do programa.
+- Variáveis locais (na Stack) são desalocadas **imediatamente**, assim que o escopo onde foram declaradas termina — sem depender de nenhum processo externo.
 
 ---
 
