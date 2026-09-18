@@ -55,7 +55,9 @@
    - [7.14 Sobrecarga](#714-sobrecarga)
    - [7.15 Encapsulamento](#715-encapsulamento)
    - [7.16 Modificadores de acesso](#716-modificadores-de-acesso)
-10. [Exercícios Resolvidos](#10-exercícios-resolvidos)
+8. [Comportamento de Memória, Arrays e Listas](#8-comportamento-de-memória-arrays-e-listas)
+   - [8.1 Tipos referência vs. tipos valor](#81-tipos-referência-vs-tipos-valor)
+9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
 
@@ -2192,7 +2194,138 @@ Um jeito prático de decidir qual usar, no dia a dia: comece sempre pelo mais re
 
 ---
 
-## 10. Exercícios Resolvidos
+## 8. Comportamento de Memória, Arrays e Listas
+
+### 8.1 Tipos referência vs. tipos valor
+
+Este tópico formaliza — com nome e regra explícitos — algo que já vínhamos usando desde a seção [7.5](#75-como-objetos-vivem-na-memória-stack-e-heap): em Java, nem toda variável se comporta do mesmo jeito na memória. Existem dois grupos, com regras bem diferentes entre si: **tipos referência** (classes) e **tipos valor** (tipos primitivos).
+
+#### Classes são tipos referência
+
+Uma variável cujo tipo é uma classe **não deve ser entendida como uma caixa guardando um valor** — e sim como um "tentáculo" (ponteiro) que aponta para uma caixa. Esse ponteiro mora na **Stack**, e aponta para um local de memória lá no **Heap** — exatamente a distinção já vista em [7.5](#75-como-objetos-vivem-na-memória-stack-e-heap).
+
+O ponto novo aqui é o que acontece quando **uma variável de tipo referência recebe outra**:
+
+```java
+Product p1, p2;
+
+p1 = new Product("TV", 900.00, 0);
+
+p2 = p1;
+```
+
+```
+Stack                              Heap
+┌─────────────┐                    ┌───────────────────────────┐
+│ p1 ●────────┼──────────┐         │ Product (0x100358)          │
+├─────────────┤          ├────────▶│ "TV", 900.00, 0              │
+│ p2 ●────────┼──────────┘         └───────────────────────────┘
+└─────────────┘
+```
+
+`p2 = p1;` **não cria um novo objeto**, nem copia `"TV"`, `900.00` e `0` para um segundo lugar no Heap. Ela copia apenas o **ponteiro**: `p2` passa a apontar para o **mesmo** endereço que `p1` já apontava. A partir daí, `p1` e `p2` são dois "controles remotos" diferentes para o **mesmo objeto** — mudar um atributo através de `p2` seria enxergado também através de `p1`, porque não existem dois objetos, existe um só, com duas referências apontando para ele.
+
+> 💡 **Analogia:** retomando o chaveiro de [7.5](#75-como-objetos-vivem-na-memória-stack-e-heap) — `p2 = p1` é copiar a **chave**, não o armário. Agora existem duas chaves (`p1`, `p2`) que abrem exatamente o mesmo armário no depósito. Mexer no conteúdo usando qualquer uma das duas chaves afeta o mesmo armário.
+
+#### O valor `null`
+
+Tipos referência aceitam o valor especial **`null`**, que indica que a variável **não aponta para ninguém**:
+
+```java
+Product p1, p2;
+
+p1 = new Product("TV", 900.00, 0);
+
+p2 = null;
+```
+
+```
+Stack                              Heap
+┌─────────────┐                    ┌───────────────────────────┐
+│ p1 ●────────┼───────────────────▶│ Product (0x100358)          │
+├─────────────┤                    │ "TV", 900.00, 0              │
+│ p2 = null    │                    └───────────────────────────┘
+└─────────────┘
+```
+
+`p2` continua existindo como variável, mas seu "tentáculo" não está preso a nenhuma caixa no Heap — ele está, literalmente, vazio. Tentar usar `p2.algumAtributo` nesse estado (uma referência `null`) é a origem do famoso erro `NullPointerException`, que ainda veremos com mais detalhe adiante.
+
+#### Tipos primitivos são tipos valor
+
+Já os **tipos primitivos** (`int`, `double`, `boolean`, `char`...) funcionam de um jeito fundamentalmente diferente: eles **são** as caixas — não ponteiros para caixas. Não existe Heap envolvido, tudo acontece direto na Stack:
+
+```java
+double x, y;
+
+x = 10;
+
+y = x;
+```
+
+```
+Stack
+┌─────────────┐
+│ x = 10.0     │
+├─────────────┤
+│ y = 10.0     │
+└─────────────┘
+```
+
+Aqui, `y = x;` funciona de forma completamente diferente do `p2 = p1;` visto acima: `y` recebe uma **cópia do valor** de `x` — não um ponteiro para o mesmo lugar. A partir desse momento, `x` e `y` são duas caixas totalmente independentes; mudar `x` depois não afeta `y` em nada, porque não há nenhuma ligação entre elas além do valor que foi copiado naquele instante.
+
+> 💡 **Analogia:** se tipo referência é copiar uma chave, tipo valor é fotocopiar um documento — `y = x` tira uma cópia idêntica do conteúdo de `x` e entrega para `y`; a partir daí, rabiscar a cópia de `y` não muda em nada o original em `x`.
+
+**Tabela de referência dos tipos primitivos:**
+
+| Tipo | Contém | Padrão | Tamanho | Faixa de valores |
+|---|---|---|---|---|
+| `boolean` | `true` ou `false` | `false` | 1 bit | N/A |
+| `char` | Caractere Unicode | `\u0000` | 16 bits | `\u0000` a `\uFFFF` |
+| `byte` | Inteiro com sinal | `0` | 8 bits | -128 a 127 |
+| `short` | Inteiro com sinal | `0` | 16 bits | -32.768 a 32.767 |
+| `int` | Inteiro com sinal | `0` | 32 bits | -2.147.483.648 a 2.147.483.647 |
+| `long` | Inteiro com sinal | `0` | 64 bits | -9.223.372.036.854.775.808 a 9.223.372.036.854.775.807 |
+| `float` | Ponto flutuante (IEEE 754) | `0.0` | 32 bits | ±1.4E-45 a ±3.4028235E+38 |
+| `double` | Ponto flutuante (IEEE 754) | `0.0` | 64 bits | ±4.9E-324 a ±1.7976931348623157E+308 |
+
+#### Inicialização obrigatória de tipos primitivos
+
+Uma variável local de tipo primitivo **precisa sempre ser inicializada antes de ser acessada** ou participar de qualquer operação — a mesma regra de [4.7 (Escopo e inicialização)](#47-escopo-e-inicialização-de-variáveis), agora aplicada especificamente a tipos valor:
+
+```java
+int p;
+
+IO.println(p); // erro de compilação: variável não inicializada
+```
+
+#### Valores padrão
+
+Essa regra de "precisa inicializar antes de usar" vale para **variáveis locais** — mas existe uma exceção importante: quando alocamos (`new`) qualquer **tipo estruturado** (uma classe ou um array, que veremos em seguida), os elementos desse tipo **já nascem com valores padrão**, sem precisar de inicialização manual:
+
+| Categoria | Valor padrão |
+|---|---|
+| Números (`int`, `double`, ...) | `0` |
+| `boolean` | `false` |
+| `char` | Caractere de código `0` |
+| Objeto (tipo referência) | `null` |
+
+> 💡 Isso explica, em retrospecto, algo que já tínhamos visto na prática lá em [7.14 (Sobrecarga)](#714-sobrecarga): o construtor de dois parâmetros do `Product` não define `quantity`, e mesmo assim o atributo não fica "quebrado" — ele simplesmente recebe o valor padrão do `int`, que é `0`. Agora temos a regra formal por trás daquele comportamento.
+
+#### Resumo: tipos referência vs. tipos valor
+
+| | Classe (tipo referência) | Tipo primitivo (tipo valor) |
+|---|---|---|
+| Vantagem | Usufrui de todos os recursos de OO | Mais simples e mais performático |
+| Variáveis são | Ponteiros | Caixas |
+| Instanciação | Precisa de `new`, ou apontar para um objeto já existente | Não instancia — uma vez declarado, já está pronto pra uso |
+| Aceita `null`? | Sim | Não |
+| `y = x;` significa | "`y` passa a apontar para onde `x` aponta" | "`y` recebe uma **cópia** de `x`" |
+| Onde vive | Objeto instanciado no Heap (a referência fica na Stack) | "Objeto" (valor) fica direto na Stack |
+| Quando é desalocado | Quando não é mais utilizado, num momento futuro, pelo *garbage collector* | Imediatamente, quando o escopo de execução onde foi declarado termina |
+
+---
+
+## 9. Exercícios Resolvidos
 
 ### Estrutura Sequencial
 
