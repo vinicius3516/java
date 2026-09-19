@@ -58,6 +58,7 @@
 8. [Comportamento de Memória, Arrays e Listas](#8-comportamento-de-memória-arrays-e-listas)
    - [8.1 Tipos referência vs. tipos valor](#81-tipos-referência-vs-tipos-valor)
    - [8.2 Desalocação de memória: garbage collector e escopo local](#82-desalocação-de-memória-garbage-collector-e-escopo-local)
+   - [8.3 Vetores — Parte 1](#83-vetores--parte-1)
 9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
@@ -2459,6 +2460,89 @@ O objeto **sobrevive** à saída de `method2()` porque, no instante em que `prod
 
 - Objetos alocados dinamicamente (no Heap), quando **não possuem mais nenhuma referência** apontando para eles, serão desalocados pelo **garbage collector** — num momento futuro, fora do controle direto do programa.
 - Variáveis locais (na Stack) são desalocadas **imediatamente**, assim que o escopo onde foram declaradas termina — sem depender de nenhum processo externo.
+
+### 8.3 Vetores — Parte 1
+
+Em programação, **vetor** é o nome dado a arranjos unidimensionais. Um **arranjo** (*array*) é uma estrutura de dados com três características centrais:
+
+- **Homogênea** — todos os elementos são do mesmo tipo.
+- **Ordenada** — cada elemento é acessado por meio de uma posição (índice).
+- **Alocada de uma vez só**, num bloco contíguo de memória — o tamanho é decidido na criação e não muda depois.
+
+| Vantagens | Desvantagens |
+|---|---|
+| Acesso imediato a qualquer elemento pela sua posição | Tamanho fixo |
+| | Dificuldade para inserir ou remover elementos |
+
+> 💡 **Analogia:** pense num vetor como uma fileira de caixas de correio numeradas, fixadas na parede de uma vez só — você acessa a caixa `7` instantaneamente, sem precisar passar pelas outras. Mas se a fileira tem 10 caixas e você precisa de uma 11ª, não dá para simplesmente encaixar mais uma: seria preciso construir uma fileira nova, maior, e realocar tudo.
+
+**Declaração e instanciação:**
+
+```java
+double[] vect = new double[n];
+```
+
+Assim como uma classe (seção [7.4](#74-instanciando-objetos)), um vetor **também é um tipo referência** — `vect` é um ponteiro na Stack, e o `new double[n]` aloca o bloco de `n` posições lá no Heap:
+
+```
+Stack                              Heap
+┌─────────────┐                    ┌───────────────────────────┐
+│ n = 3        │                    │ 0: 1.72                     │
+├─────────────┤                    │ 1: 1.56                     │
+│ vect ●───────┼───────────────────▶│ 2: 1.80                     │
+└─────────────┘                    └───────────────────────────┘
+```
+
+Antes de qualquer valor ser atribuído, cada posição já nasce com o **valor padrão** do tipo do vetor (seção [8.1](#81-tipos-referência-vs-tipos-valor)) — no caso de `double[]`, todas as posições começam em `0.0`.
+
+**Problema 1:** ler um número inteiro `N` e a altura de `N` pessoas, armazenar as `N` alturas num vetor e, em seguida, mostrar a altura média dessas pessoas.
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        double sum = 0.0;
+
+        int n = sc.nextInt();
+
+        double[] vect = new double[n];
+
+        for (int i = 0; i < n; i++) {
+            vect[i] = sc.nextDouble();
+            sum += vect[i];
+        }
+
+        double averageHeight = sum / n;
+
+        System.out.printf("AVERAGE HEIGHT = %.2f", averageHeight);
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+3
+1.72
+1.56
+1.80
+AVERAGE HEIGHT = 1.69
+```
+
+> ⚠️ **Bug encontrado e corrigido:** a versão original tinha `double averageHeight = sum / 3;`, com o `3` **fixo no código** em vez de `n`. Para o exemplo do enunciado (3 pessoas) o resultado batia por pura coincidência — mas testando com `n = 4` (quatro alturas de `1.70`), o programa original devolvia `2.27` em vez de `1.70`. Trocar o `3` fixo por `n` corrigiu o cálculo para qualquer quantidade de pessoas. Fica a lição: sempre que um valor "deveria" ser o mesmo que uma variável já existente (aqui, o total de elementos somados é sempre `n`), usar a variável em vez de digitar o número — um literal fixo só continua certo enquanto o cenário de teste não mudar.
+
+> 💬 Essa aula tem uma "Parte 2" na próxima lição, aprofundando vetores — inclusive com um vetor de objetos (tipo referência), não só de tipos primitivos como neste exemplo.
 
 ---
 
