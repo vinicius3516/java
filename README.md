@@ -59,6 +59,7 @@
    - [8.1 Tipos referência vs. tipos valor](#81-tipos-referência-vs-tipos-valor)
    - [8.2 Desalocação de memória: garbage collector e escopo local](#82-desalocação-de-memória-garbage-collector-e-escopo-local)
    - [8.3 Vetores — Parte 1](#83-vetores--parte-1)
+   - [8.4 Vetores — Parte 2 (vetor de tipos referência)](#84-vetores--parte-2-vetor-de-tipos-referência)
 9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
@@ -2543,6 +2544,116 @@ AVERAGE HEIGHT = 1.69
 > ⚠️ **Bug encontrado e corrigido:** a versão original tinha `double averageHeight = sum / 3;`, com o `3` **fixo no código** em vez de `n`. Para o exemplo do enunciado (3 pessoas) o resultado batia por pura coincidência — mas testando com `n = 4` (quatro alturas de `1.70`), o programa original devolvia `2.27` em vez de `1.70`. Trocar o `3` fixo por `n` corrigiu o cálculo para qualquer quantidade de pessoas. Fica a lição: sempre que um valor "deveria" ser o mesmo que uma variável já existente (aqui, o total de elementos somados é sempre `n`), usar a variável em vez de digitar o número — um literal fixo só continua certo enquanto o cenário de teste não mudar.
 
 > 💬 Essa aula tem uma "Parte 2" na próxima lição, aprofundando vetores — inclusive com um vetor de objetos (tipo referência), não só de tipos primitivos como neste exemplo.
+
+### 8.4 Vetores — Parte 2 (vetor de tipos referência)
+
+A Parte 1 usou um vetor de **tipo valor** (`double[]`). Esta continuação mostra o que muda quando o vetor é de **tipo referência** — ou seja, um vetor de objetos — e introduz a propriedade `length`.
+
+#### A propriedade `length`
+
+Todo vetor tem uma propriedade `length`, que devolve a quantidade de posições que ele tem — repare que é uma **propriedade**, sem parênteses (`vect.length`), diferente de um método como `list.size()` que veremos mais adiante em Listas. Usar `vect.length` no lugar de repetir a variável `n` numa condição de laço (`i < vect.length` em vez de `i < n`) deixa o código mais seguro: o laço sempre reflete o tamanho **real** do vetor, mesmo que `n` mude ou não esteja mais disponível naquele ponto do código.
+
+#### Um vetor de objetos é um vetor de referências
+
+**Problema 2:** ler um número inteiro `N` e os dados (nome e preço) de `N` produtos, armazenar num vetor e mostrar o preço médio.
+
+Para este problema, foi criada a classe `NewProduct`:
+
+```java
+package entities;
+
+public class NewProduct {
+
+    private String name;
+    private double price;
+
+    public NewProduct(String name, double price) {
+        this.name = name;
+        this.price = price;
+    }
+}
+```
+
+Ao declarar `NewProduct[] vect = new NewProduct[n];`, o Java aloca no Heap um bloco de `n` **posições** — mas cada posição, por si só, é apenas mais uma **referência** (exatamente como visto em [8.1](#81-tipos-referência-vs-tipos-valor)), inicialmente `null`. Só quando cada posição recebe um `new NewProduct(...)` é que ela passa a apontar para um objeto de verdade, em outro lugar do Heap:
+
+```
+Stack                          Heap
+┌─────────┐                    ┌──────┐        ┌──────────────────┐
+│ n = 3    │                    │ 0  ●─┼───────▶│ NewProduct         │
+├─────────┤                    ├──────┤        │ "TV", 900.0         │
+│ vect ●───┼───────────────────▶│ 1  ●─┼──┐     └──────────────────┘
+└─────────┘                    ├──────┤  │     ┌──────────────────┐
+                                │ 2  ●─┼──┼────▶│ NewProduct         │
+                                └──────┘  │     │ "Fryer", 400.0      │
+                                          │     └──────────────────┘
+                                          │     ┌──────────────────┐
+                                          └────▶│ NewProduct         │
+                                                │ "Stove", 800.0      │
+                                                └──────────────────┘
+```
+
+> 💡 Ou seja: um vetor de tipo referência é, na prática, um **vetor de "chaves"** — cada posição é seu próprio ponteiro independente, podendo apontar para objetos em qualquer lugar do Heap (não necessariamente lado a lado).
+
+#### Duas soluções válidas para o mesmo problema
+
+O material de apoio (a partir da página 15/17 do PDF) resolve o cálculo da média em **dois laços**: o primeiro popula o vetor lendo nome e preço de cada produto; o segundo percorre `vect` de novo, chamando `vect[i].getPrice()` para somar os preços. Como `price` é `private`, esse segundo laço só é possível **porque** a classe ganhou um `getPrice()` (seção [7.15 — Encapsulamento](#715-encapsulamento)).
+
+A solução implementada aqui seguiu um caminho diferente — resolver tudo em **um único laço**:
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+import entities.NewProduct;
+
+public class Program {
+
+    public static void main(String[] args) {
+
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        double sum = 0.0;
+
+        int n = sc.nextInt();
+
+        NewProduct[] vect = new NewProduct[n];
+
+        for (int i = 0; i < vect.length; i++) {
+            sc.nextLine();
+            String name = sc.nextLine();
+            double price = sc.nextDouble();
+            vect[i] = new NewProduct(name, price);
+
+            sum += price;
+        }
+
+        double avaregePrice = sum / vect.length;
+        System.out.printf("AVERAGE PRICE = %.2f", avaregePrice);
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+3
+TV
+900.00
+Fryer
+400.00
+Stove
+800.00
+AVERAGE PRICE = 700.00
+```
+
+A ideia por trás dessa versão: no momento em que o produto é lido, `price` já existe como variável local, **antes mesmo** de virar atributo de um `NewProduct`. Somar `price` ali mesmo elimina a necessidade de percorrer o vetor uma segunda vez — e, como consequência direta, `NewProduct` nem precisou ganhar um `getPrice()`, já que nada fora da classe chega a perguntar o preço de um produto já criado.
+
+> 🎯 **Os dois caminhos são válidos, com um trade-off real por trás:** a versão de um laço só é mais direta *porque*, neste problema específico, o preço já está disponível como variável solta bem na hora de montar o objeto — então por que descartar esse valor e ter que "perguntar" de volta ao objeto depois? Mas o padrão de dois laços do professor generaliza melhor para cenários onde os dados **não** chegam soltos dessa forma — por exemplo, se o vetor de produtos viesse pronto de outro lugar (um arquivo, um banco de dados, um método que só devolve `NewProduct[]`): nesse caso não existiria nenhum `price` local para somar, e um `getPrice()` seria a única forma de acessar o dado já encapsulado. Resumindo: quando o dado bruto está ali na sua mão, use-o direto; quando só o objeto está disponível, o getter é o caminho — e é exatamente por isso que o encapsulamento (7.15) existe, para deixar essa porta aberta sem expor o atributo cru.
 
 ---
 
