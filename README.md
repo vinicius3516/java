@@ -498,6 +498,27 @@ if (condicao) {
 
 Continuamos lidando com mais de duas condições, só que agora de forma linear e mais legível — cada `else if` é testado em sequência, na ordem em que aparece, até que uma condição seja verdadeira (ou até cair no `else` final, se nenhuma for).
 
+#### `return` dentro de um `if` — encerrando cedo
+
+Um `if` pode conter um `return` no seu bloco. Quando isso acontece, o método é encerrado **imediatamente** ali, sem executar mais nada do que vem depois dele — mesmo que o `if` não tenha um `else`.
+
+```java
+if (n > 10) {
+    System.out.println("Numero max permitido e 10");
+    sc.close();
+    return;
+}
+
+// só chega aqui se n <= 10
+int[] vect = new int[n];
+```
+
+Esse padrão é chamado de ***guard clause*** (cláusula de guarda): trata logo no início um caso inválido ou excepcional e **sai cedo** do método, em vez de embrulhar todo o restante da lógica dentro de um `else`. O código que vem depois do `if` já pode assumir que aquele caso ruim não aconteceu — não precisa nem verificar de novo.
+
+> 💡 **Analogia:** é como o segurança na porta de um evento conferindo a entrada — se não está na lista, ele barra ali mesmo, na porta; ninguém que foi barrado chega a saber o que tem lá dentro. Quem passou da porta (do `if`) segue o resto do fluxo normalmente.
+
+> 💬 Dentro do `main`, um `return;` sozinho (sem valor) funciona como "encerrar o programa a partir daqui" — já que `main` é `void` e não há mais nada programado para rodar depois dele terminar.
+
 ### 4.4 Operadores de atribuição cumulativa
 
 Repare no trecho abaixo, que calcula o valor de uma conta cobrando R$ 2,00 por minuto excedente após os 100 minutos:
@@ -3240,4 +3261,74 @@ Account 7801, Holder: Maria Brown, Balance: $ -3.00
 > 💡 **`@Override` — uma anotação nova:** o `toString()` já tinha sido sobrescrito antes (seção [7.10](#710-a-superclasse-object-e-o-método-tostring)), mas agora aparece com `@Override` logo acima. Essa anotação não muda o comportamento do método — ela é uma instrução **para o compilador**, avisando "este método pretende sobrescrever um método da superclasse". Se por engano o nome ou os parâmetros não baterem exatamente com o método original de `Object`, o compilador acusa erro na hora, em vez de você criar sem querer um método novo (que nunca seria chamado no lugar do original). É uma rede de segurança de baixo custo, e o padrão de mercado é sempre usá-la ao sobrescrever um método.
 >
 > ⚠️ **Convenção de nomes:** `Deposit` e `Withdraw` estão com a primeira letra maiúscula — mas a convenção Java (a mesma citada para get/set na seção [7.15](#715-encapsulamento)) é *camelCase* para métodos, começando sempre com letra minúscula: `deposit`/`withdraw`. Maiúscula no começo (`PascalCase`) é a convenção reservada para **nomes de classe** (`AccountBank`, `Product`...). O código funciona normalmente do mesmo jeito — Java não obriga essa convenção —, mas seguir o padrão evita estranhar (ou estranhar em código de terceiros) mais adiante.
+</details>
+
+### Comportamento de Memória, Arrays e Listas
+
+Exercícios práticos do módulo de **Comportamento de Memória, Arrays e Listas** (seção [8](#8-comportamento-de-memória-arrays-e-listas)).
+
+<details>
+<summary><strong>Exercício — Números negativos de um vetor</strong></summary>
+
+**Enunciado:** fazer um programa que leia um número inteiro positivo `N` (máximo = 10) e depois `N` números inteiros, armazenando-os em um vetor. Em seguida, mostrar na tela todos os números negativos lidos.
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Quantos numeros voce vai digitar? ");
+        int n = sc.nextInt();
+
+        if (n > 10) {
+            System.out.println("Numero max permitido e 10");
+            sc.close();
+            return;
+        }
+
+        int[] vect = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            System.out.print("Digite um numero: ");
+            vect[i] = sc.nextInt();
+        }
+
+        System.out.println("NUMEROS NEGATIVOS:");
+
+        for (int j = 0; j < vect.length; j++) {
+            if (vect[j] < 0) {
+                System.out.println(vect[j]);
+            }
+        }
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Quantos numeros voce vai digitar? 6
+Digite um numero: 8
+Digite um numero: -2
+Digite um numero: 9
+Digite um numero: 10
+Digite um numero: -3
+Digite um numero: -7
+NUMEROS NEGATIVOS:
+-2
+-3
+-7
+```
+
+> 💡 Repare no `if (n > 10) { ... return; }` logo no início — uma *guard clause* que encerra o programa cedo quando a entrada é inválida, documentada em detalhe na seção [4.3 (`return` dentro de um `if`)](#return-dentro-de-um-if--encerrando-cedo).
 </details>
