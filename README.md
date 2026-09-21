@@ -3465,3 +3465,117 @@ Teresa
 
 > 💡 O laço acumula a **soma bruta** das alturas em `averageHeight`, e a divisão por `people.length` só acontece uma vez, na hora de formatar a saída (`averageHeight / people.length`) — o padrão mais comum para calcular uma média: soma tudo primeiro, divide no final.
 </details>
+
+<details>
+<summary><strong>Exercício — Aluguel de quartos de um pensionato</strong></summary>
+
+**Enunciado:** a dona de um pensionato possui dez quartos para alugar para estudantes, identificados pelos números 0 a 9. Fazer um programa que inicie com todos os dez quartos vazios, leia uma quantidade `N` de estudantes que vão alugar quartos (1 a 10) e registre o aluguel de cada um (nome, email e o quarto escolhido — sempre um quarto vago). Ao final, imprimir um relatório de todas as ocupações do pensionato, em ordem de quarto.
+
+```java
+package entities;
+
+public class ClientStudent {
+    private String name;
+    private String email;
+    private int room;
+
+    public ClientStudent(String name, String email, int room) {
+        this.name = name;
+        this.email = email;
+        this.room = room;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public int getRoom() {
+        return room;
+    }
+}
+```
+
+```java
+package application;
+
+import entities.ClientStudent;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("How many rooms will be rented? ");
+        int rentAmount = sc.nextInt();
+        System.out.println();
+
+        ClientStudent[] clientList = new ClientStudent[10];
+
+        for (int i = 0; i < rentAmount; i++) {
+            sc.nextLine();
+            int countRent = i + 1;
+            System.out.println("Rent #" + countRent);
+            System.out.print("Name: ");
+            String name = sc.nextLine();
+
+            System.out.print("Email: ");
+            String email = sc.nextLine();
+
+            System.out.print("Room: ");
+            int room = sc.nextInt();
+            System.out.println();
+
+            clientList[room] = new ClientStudent(name, email, room);
+        }
+
+        System.out.println();
+        System.out.println("Busy rooms:");
+
+        for (int i = 0; i < clientList.length; i++) {
+            if (clientList[i] != null) {
+                System.out.println(i + ": " + clientList[i].getName() + ", " + clientList[i].getEmail());
+            }
+        }
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+How many rooms will be rented? 3
+
+Rent #1
+Name: Maria Green
+Email: maria@gmail.com
+Room: 5
+
+Rent #2
+Name: Marco Antonio
+Email: marco@gmail.com
+Room: 1
+
+Rent #3
+Name: Alex Brown
+Email: alex@gmail.com
+Room: 8
+
+Busy rooms:
+1: Marco Antonio, marco@gmail.com
+5: Maria Green, maria@gmail.com
+8: Alex Brown, alex@gmail.com
+```
+
+> 💡 **Dois usos de vetor que já vimos separados, agora juntos:** `clientList` tem tamanho **fixo** (10 — os dez quartos, existam ou não inquilinos), e o **índice do vetor é o próprio número do quarto** (`clientList[room] = ...`), não uma posição sequencial preenchida em ordem — por isso o relatório final já sai naturalmente ordenado por quarto, só percorrendo o vetor de `0` a `9`. E como nem todo quarto é ocupado, as posições não usadas continuam com o valor padrão de um tipo referência: `null` (seção [8.1](#81-tipos-referência-vs-tipos-valor)) — daí o `if (clientList[i] != null)` para pular os quartos vagos.
+</details>
