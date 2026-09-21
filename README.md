@@ -3332,3 +3332,136 @@ NUMEROS NEGATIVOS:
 
 > 💡 Repare no `if (n > 10) { ... return; }` logo no início — uma *guard clause* que encerra o programa cedo quando a entrada é inválida, documentada em detalhe na seção [4.3 (`return` dentro de um `if`)](#return-dentro-de-um-if--encerrando-cedo).
 </details>
+
+<details>
+<summary><strong>Exercício — Altura média e percentual de menores de 16 anos</strong></summary>
+
+**Enunciado:** ler nome, idade e altura de `N` pessoas. Depois, mostrar a altura média das pessoas, a porcentagem de pessoas com menos de 16 anos, e os nomes dessas pessoas (caso houver).
+
+```java
+package entities;
+
+public class People {
+    private String name;
+    private int age;
+    private double height;
+
+    public People(String name, int age, double height) {
+        this.name = name;
+        this.age = age;
+        this.height = height;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public double getHeight() {
+        return height;
+    }
+}
+```
+
+```java
+package application;
+
+import entities.People;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Quantas pessoas serao digitadas? ");
+        int qnt = sc.nextInt();
+
+        People[] people = new People[qnt];
+
+        for (int i = 0; i < people.length; i++) {
+            int position = i + 1;
+            System.out.println("Dados da " + position + "º" + " pessoa:");
+
+            sc.nextLine();
+            System.out.print("Nome: ");
+            String name = sc.nextLine();
+
+            System.out.print("Idade: ");
+            int age = sc.nextInt();
+            sc.nextLine();
+
+            System.out.print("Altura: ");
+            double height = sc.nextDouble();
+
+            people[i] = new People(name, age, height);
+        }
+
+        double averageHeight = 0.0;
+        int smallerCounter = 0;
+
+        for (int i = 0; i < people.length; i++) {
+            averageHeight += people[i].getHeight() / people.length;
+
+            if (people[i].getAge() < 16) {
+                smallerCounter++;
+            }
+        }
+
+        System.out.println();
+        System.out.printf("Altura média: %.2f%n", averageHeight);
+
+        double percentAge = ((double) smallerCounter / people.length) * 100;
+        System.out.printf("Pessoas com menos de 16 anos: %.1f%%%n", percentAge);
+
+        for (int i = 0; i < people.length; i++) {
+            if (people[i].getAge() < 16) {
+                System.out.println(people[i].getName());
+            }
+        }
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Quantas pessoas serao digitadas? 5
+Dados da 1º pessoa:
+Nome: Joao
+Idade: 15
+Altura: 1.82
+Dados da 2º pessoa:
+Nome: Maria
+Idade: 16
+Altura: 1.60
+Dados da 3º pessoa:
+Nome: Teresa
+Idade: 14
+Altura: 1.58
+Dados da 4º pessoa:
+Nome: Carlos
+Idade: 21
+Altura: 1.65
+Dados da 5º pessoa:
+Nome: Paulo
+Idade: 17
+Altura: 1.78
+
+Altura média: 1.69
+Pessoas com menos de 16 anos: 40.0%
+Joao
+Teresa
+```
+
+> 💡 **Técnica interessante — média sem somatório separado:** em vez de acumular uma soma (`sum += altura`) e só dividir por `people.length` no final, o código faz `averageHeight += people[i].getHeight() / people.length` **a cada volta do laço** — já divide cada altura por `people.length` antes de somar. O resultado final é matematicamente idêntico (dividir cada parcela e depois somar é o mesmo que somar tudo e dividir uma vez só), só que dispensa guardar uma variável de soma bruta separada.
+</details>
