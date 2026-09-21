@@ -3408,7 +3408,7 @@ public class Program {
         int smallerCounter = 0;
 
         for (int i = 0; i < people.length; i++) {
-            averageHeight += people[i].getHeight() / people.length;
+            averageHeight += people[i].getHeight();
 
             if (people[i].getAge() < 16) {
                 smallerCounter++;
@@ -3416,7 +3416,7 @@ public class Program {
         }
 
         System.out.println();
-        System.out.printf("Altura média: %.2f%n", averageHeight);
+        System.out.printf("Altura média: %.2f%n", averageHeight / people.length);
 
         double percentAge = ((double) smallerCounter / people.length) * 100;
         System.out.printf("Pessoas com menos de 16 anos: %.1f%%%n", percentAge);
@@ -3463,5 +3463,5 @@ Joao
 Teresa
 ```
 
-> 💡 **Técnica interessante — média sem somatório separado:** em vez de acumular uma soma (`sum += altura`) e só dividir por `people.length` no final, o código faz `averageHeight += people[i].getHeight() / people.length` **a cada volta do laço** — já divide cada altura por `people.length` antes de somar. O resultado final é matematicamente idêntico (dividir cada parcela e depois somar é o mesmo que somar tudo e dividir uma vez só), só que dispensa guardar uma variável de soma bruta separada.
+> 💡 O laço acumula a **soma bruta** das alturas em `averageHeight`, e a divisão por `people.length` só acontece uma vez, na hora de formatar a saída (`averageHeight / people.length`) — o padrão mais comum para calcular uma média: soma tudo primeiro, divide no final.
 </details>
