@@ -61,6 +61,7 @@
    - [8.3 Vetores — Parte 1](#83-vetores--parte-1)
    - [8.4 Vetores — Parte 2 (vetor de tipos referência)](#84-vetores--parte-2-vetor-de-tipos-referência)
    - [8.5 Boxing, unboxing e wrapper classes](#85-boxing-unboxing-e-wrapper-classes)
+   - [8.6 Laço `for each`](#86-laço-for-each)
 9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
@@ -2810,6 +2811,39 @@ Em vez de `double price` e `int quantity`. A diferença na prática:
    ```
 
    > ⚠️ A regra prática: para comparar o **valor** de dois wrappers, use sempre `.equals(...)`, nunca `==`. O `==` só é seguro para primitivos de verdade (`int a == int b`), porque aí não existe objeto envolvido — apenas comparação direta de valores nas caixas da Stack.
+
+### 8.6 Laço `for each`
+
+O `for each` é uma sintaxe **opcional e simplificada** para percorrer uma coleção (um vetor, ou as listas que veremos em seguida).
+
+**Sintaxe:**
+
+```java
+for (Tipo apelido : coleção) {
+    <comando 1>
+    <comando 2>
+}
+```
+
+> 🎯 **Como ler um `for each` em voz alta:** *"para cada `<apelido>` em `<coleção>`, faça tal coisa"*. Esse jeito de ler o laço em palavras — em vez de pensar em índices — é o que realmente ajuda a fixar a sintaxe.
+
+**Comparando com o `for` tradicional:**
+
+```java
+String[] vect = new String[] {"Maria", "Bob", "Alex"};
+
+for (int i = 0; i < vect.length; i++) {
+    System.out.println(vect[i]);
+}
+
+for (String obj : vect) {
+    System.out.println(obj);
+}
+```
+
+As duas versões imprimem exatamente a mesma coisa. A diferença está em **como** cada uma acessa os elementos: no `for` tradicional, é preciso controlar manualmente um índice `i` e usar `vect[i]` para "ir buscar" o objeto daquela posição. No `for each`, a variável declarada logo ali (`String obj`) **já é, a cada volta, o próprio objeto da coleção** — sem precisar de índice nenhum nem de `vect[i]` para chegar até ele. Ler `for (String obj : vect)` já é, literalmente, "para cada `obj` contido em `vect`, faça...".
+
+> 💡 O `for each` é a opção mais simples sempre que o objetivo é apenas **percorrer** todos os elementos, um a um. Quando o índice em si é necessário para algo (por exemplo, usar a posição como número do quarto, como no exercício da seção 9, ou percorrer dois vetores em paralelo pela mesma posição), o `for` tradicional continua sendo a ferramenta certa — o `for each` não expõe nenhum índice para usar.
 
 ---
 
