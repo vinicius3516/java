@@ -62,6 +62,8 @@
    - [8.4 Vetores — Parte 2 (vetor de tipos referência)](#84-vetores--parte-2-vetor-de-tipos-referência)
    - [8.5 Boxing, unboxing e wrapper classes](#85-boxing-unboxing-e-wrapper-classes)
    - [8.6 Laço `for each`](#86-laço-for-each)
+   - [8.7 Listas — Parte 1](#87-listas--parte-1)
+   - [8.8 Listas — Parte 2 (operações, predicados e expressões lambda)](#88-listas--parte-2-operações-predicados-e-expressões-lambda)
 9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
@@ -2844,6 +2846,179 @@ for (String obj : vect) {
 As duas versões imprimem exatamente a mesma coisa. A diferença está em **como** cada uma acessa os elementos: no `for` tradicional, é preciso controlar manualmente um índice `i` e usar `vect[i]` para "ir buscar" o objeto daquela posição. No `for each`, a variável declarada logo ali (`String obj`) **já é, a cada volta, o próprio objeto da coleção** — sem precisar de índice nenhum nem de `vect[i]` para chegar até ele. Ler `for (String obj : vect)` já é, literalmente, "para cada `obj` contido em `vect`, faça...".
 
 > 💡 O `for each` é a opção mais simples sempre que o objetivo é apenas **percorrer** todos os elementos, um a um. Quando o índice em si é necessário para algo (por exemplo, usar a posição como número do quarto, como no exercício da seção 9, ou percorrer dois vetores em paralelo pela mesma posição), o `for` tradicional continua sendo a ferramenta certa — o `for each` não expõe nenhum índice para usar.
+
+### 8.7 Listas — Parte 1
+
+Depois de vetores, entra em cena uma segunda estrutura para guardar coleções de dados: a **lista**. Esta primeira aula é conceitual — o uso prático (métodos, manipulação) vem na Parte 2.
+
+#### O que é uma lista
+
+Assim como um vetor (seção [8.3](#83-vetores--parte-1)), uma lista é uma estrutura de dados:
+
+- **Homogênea** — todos os elementos são do mesmo tipo.
+- **Ordenada** — os elementos são acessados por meio de posições.
+
+Mas com diferenças importantes em relação ao vetor:
+
+- **Começa vazia**, e seus elementos são alocados **sob demanda** (um de cada vez, conforme são adicionados) — não existe um "tamanho" fixado de antemão como em `new double[n]`.
+- Cada elemento ocupa um **"nó"** (ou *nodo*) da lista.
+
+**Desenho conceitual** (cada nó guarda o valor **e** uma ligação para o próximo nó):
+
+```
+myList
+┌───────┐    ┌───────┐    ┌───────┐
+│ (0)     │    │ (1)     │    │ (2)     │
+│ 1.72 ●──┼───▶│ 1.56 ●──┼───▶│ 1.80 X  │
+└───────┘    └───────┘    └───────┘
+```
+
+**Desenho simplificado** (o jeito mais comum de visualizar no dia a dia, parecido com um vetor indexado):
+
+```
+myList
+0 │ 1.72
+1 │ 1.56
+2 │ 1.80
+```
+
+#### `List` é uma interface, não uma classe concreta
+
+O tipo usado para declarar uma lista é `List` — mas `List` é uma **interface**, e quem de fato implementa o comportamento são classes como `ArrayList`, `LinkedList`, entre outras. *(Interfaces ainda são um assunto formal mais à frente no curso — mas `List` já serve como primeiro contato prático com a ideia: existe um "contrato" — `List` — que descreve **o que** uma lista sabe fazer, e diferentes classes concretas decidem **como** fazer isso por baixo dos panos.)*
+
+> 📚 **Referência oficial:** [`java.util.List`](https://docs.oracle.com/javase/10/docs/api/java/util/List.html), na documentação da Oracle.
+
+**Vantagens e desvantagens em relação a um vetor:**
+
+| Vantagens | Desvantagens |
+|---|---|
+| Tamanho **variável** (cresce e encolhe sob demanda) | Acesso sequencial aos elementos * |
+| Facilidade para realizar inserções e remoções | |
+
+> ⚠️ **Sobre o `*` da desvantagem:** o material do curso marca "acesso sequencial aos elementos" como desvantagem — coerente com o desenho conceitual de nós ligados acima, onde para chegar ao elemento da posição `5` seria preciso "andar" nó por nó a partir do início. **Mas essa desvantagem depende de qual classe concreta implementa a lista.** Ela é real para uma `LinkedList` (que de fato usa nós ligados por baixo dos panos). Já numa `ArrayList` — a implementação mais usada no dia a dia —, os elementos ficam guardados internamente num array de verdade, então o acesso por posição é **direto**, igual ao "desenho simplificado" acima — não sequencial. Ou seja: a desvantagem é do **conceito geral** de lista, mas pode deixar de valer dependendo de qual implementação (`ArrayList`, `LinkedList`, ...) é escolhida.
+
+#### O que vem a seguir
+
+O checklist do material lista alguns assuntos ainda pendentes, que vão aparecer formalmente mais à frente no curso: **interfaces**, **generics** e **predicados (lambda)**. `List<Tipo>` já é um primeiro contato com *generics* (o `<Tipo>` entre os sinais de menor/maior, dizendo qual tipo de elemento aquela lista guarda) — mesmo sem entrar no formalismo ainda.
+
+### 8.8 Listas — Parte 2 (operações, predicados e expressões lambda)
+
+Esta aula colocou a `List` da seção [8.7](#87-listas--parte-1) em prática. Antes das operações, vale reforçar a declaração:
+
+```java
+List<String> list = new ArrayList<>();
+```
+
+Repare: a variável é declarada com o **tipo da interface** (`List`), mas instanciada com uma **classe concreta** (`ArrayList`) — a mesma ideia de "contrato vs. implementação" da seção [8.7](#87-listas--parte-1). Isso é considerado boa prática em Java: o resto do código só depende de `List` (o que a lista sabe fazer), nunca de `ArrayList` especificamente — trocar para `LinkedList` no futuro exigiria mudar só essa linha.
+
+#### Principais operações
+
+| Operação | O que faz |
+|---|---|
+| `list.size()` | Retorna a quantidade de elementos na lista |
+| `list.get(posicao)` | Retorna o elemento numa posição específica |
+| `list.add(obj)` | Adiciona um elemento ao **final** da lista |
+| `list.add(posicao, obj)` | Insere um elemento numa posição específica, empurrando os demais |
+| `list.remove(obj)` | Remove a **primeira ocorrência** do objeto informado |
+| `list.remove(posicao)` | Remove o elemento de uma posição específica |
+| `list.removeIf(predicado)` | Remove **todos** os elementos que satisfazem uma condição |
+| `list.indexOf(obj)` | Retorna a posição da **primeira** ocorrência do objeto (ou `-1` se não existir) |
+| `list.lastIndexOf(obj)` | Retorna a posição da **última** ocorrência do objeto (ou `-1` se não existir) |
+
+#### Predicados e expressões lambda (resumo)
+
+Os métodos `removeIf` e as operações de *stream* abaixo têm algo em comum: todos recebem, como argumento, **uma condição** a ser testada em cada elemento — não um valor pronto. Dois conceitos tornam isso possível:
+
+- **Predicado (`Predicate`):** representa, de forma abstrata, "uma pergunta de sim/não sobre um elemento" — um teste que recebe um valor e devolve `true` ou `false`. É o "molde" do que pode ser passado para `removeIf`, `filter`, etc.
+- **Expressão lambda:** a forma compacta de escrever essa pergunta **na hora**, sem precisar criar uma classe ou método separado para isso. Sintaxe básica: `parametro -> expressão`.
+
+```java
+list.removeIf(x -> x.charAt(0) == 'M');
+```
+
+Lendo em voz alta: *"remova de `list` todo `x` cujo primeiro caractere seja `'M'`"*. O trecho `x -> x.charAt(0) == 'M'` é a expressão lambda: `x` é o parâmetro (representa, um de cada vez, cada elemento da lista), e `x.charAt(0) == 'M'` é o teste — o predicado propriamente dito, avaliado para cada `x`.
+
+> 💬 Interfaces, *generics* e o formalismo por trás de `Predicate` ainda serão vistos em detalhe mais à frente no curso — este resumo serve só para o código abaixo não parecer "mágica" enquanto isso não chega.
+
+#### Demo completo
+
+```java
+package application;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class Program {
+    public static void main(String[] args) {
+        List<String> list = new ArrayList<>();
+
+        list.add("Maria");
+        list.add("Alex");
+        list.add("Bob");
+        list.add("Anna");
+        list.add(2, "Marco");
+
+        System.out.println(list.size());
+        for (String x : list) {
+            System.out.println(x);
+        }
+
+        System.out.println("---------------------");
+        list.removeIf(x -> x.charAt(0) == 'M');
+        for (String x : list) {
+            System.out.println(x);
+        }
+
+        System.out.println("---------------------");
+        System.out.println("Index of Bob: " + list.indexOf("Bob"));
+        System.out.println("Index of Marco: " + list.indexOf("Marco"));
+
+        System.out.println("---------------------");
+        List<String> result = list.stream().filter(x -> x.charAt(0) == 'A').toList();
+        for (String x : result) {
+            System.out.println(x);
+        }
+
+        System.out.println("---------------------");
+        String name = list.stream().filter(x -> x.charAt(0) == 'J').findFirst().orElse(null);
+        System.out.println(name);
+    }
+}
+```
+
+**Saída:**
+
+```
+5
+Maria
+Alex
+Marco
+Bob
+Anna
+---------------------
+Alex
+Bob
+Anna
+---------------------
+Index of Bob: 1
+Index of Marco: -1
+---------------------
+Alex
+Anna
+---------------------
+null
+```
+
+Percorrendo a lógica do `Demo`:
+
+1. `list.add(2, "Marco")` insere `"Marco"` na posição `2`, empurrando `"Bob"` e `"Anna"` uma casa para frente — por isso a ordem final da primeira impressão é `Maria, Alex, Marco, Bob, Anna`.
+2. `list.removeIf(x -> x.charAt(0) == 'M')` remove **todos** os elementos que começam com `'M'` — tanto `"Maria"` quanto `"Marco"` somem de uma vez.
+3. Depois da remoção, `"Marco"` não existe mais na lista, então `list.indexOf("Marco")` retorna `-1`.
+4. `list.stream().filter(x -> x.charAt(0) == 'A').toList()` percorre a lista, mantém só quem começa com `'A'` (`"Alex"`, `"Anna"`) e devolve uma **nova lista** com esse resultado — a lista original (`list`) não é alterada.
+5. `list.stream().filter(x -> x.charAt(0) == 'J').findFirst().orElse(null)` procura o primeiro elemento começando com `'J'`; como não existe nenhum, `findFirst()` não encontra nada e `.orElse(null)` devolve `null` como valor padrão.
+
+> ⚠️ **Uma diferença em relação ao material de apoio:** o professor converteu o resultado do `filter` de volta para lista com `.collect(Collectors.toList())`. Nesta implementação, o próprio IntelliJ sugeriu `.toList()` no final da cadeia — mais curto, e o programa funciona identicamente. A diferença real entre os dois (sutil, mas vale saber): `.toList()` (adicionado na API de Streams a partir do Java 16) sempre devolve uma lista **imutável** (tentar `result.add(...)` depois lançaria erro); já `Collectors.toList()` não dá nenhuma garantia formal sobre o tipo devolvido — na prática costuma ser uma lista mutável, mas isso é detalhe de implementação, não uma garantia da API. Para este exercício (onde `result` só é lido, nunca alterado), os dois se comportam exatamente igual.
 
 ---
 
