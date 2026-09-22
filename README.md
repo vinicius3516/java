@@ -60,6 +60,7 @@
    - [8.2 Desalocação de memória: garbage collector e escopo local](#82-desalocação-de-memória-garbage-collector-e-escopo-local)
    - [8.3 Vetores — Parte 1](#83-vetores--parte-1)
    - [8.4 Vetores — Parte 2 (vetor de tipos referência)](#84-vetores--parte-2-vetor-de-tipos-referência)
+   - [8.5 Boxing, unboxing e wrapper classes](#85-boxing-unboxing-e-wrapper-classes)
 9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
@@ -2675,6 +2676,140 @@ AVERAGE PRICE = 700.00
 A ideia por trás dessa versão: no momento em que o produto é lido, `price` já existe como variável local, **antes mesmo** de virar atributo de um `NewProduct`. Somar `price` ali mesmo elimina a necessidade de percorrer o vetor uma segunda vez — e, como consequência direta, `NewProduct` nem precisou ganhar um `getPrice()`, já que nada fora da classe chega a perguntar o preço de um produto já criado.
 
 > 🎯 **Os dois caminhos são válidos, com um trade-off real por trás:** a versão de um laço só é mais direta *porque*, neste problema específico, o preço já está disponível como variável solta bem na hora de montar o objeto — então por que descartar esse valor e ter que "perguntar" de volta ao objeto depois? Mas o padrão de dois laços do professor generaliza melhor para cenários onde os dados **não** chegam soltos dessa forma — por exemplo, se o vetor de produtos viesse pronto de outro lugar (um arquivo, um banco de dados, um método que só devolve `NewProduct[]`): nesse caso não existiria nenhum `price` local para somar, e um `getPrice()` seria a única forma de acessar o dado já encapsulado. Resumindo: quando o dado bruto está ali na sua mão, use-o direto; quando só o objeto está disponível, o getter é o caminho — e é exatamente por isso que o encapsulamento (7.15) existe, para deixar essa porta aberta sem expor o atributo cru.
+
+### 8.5 Boxing, unboxing e wrapper classes
+
+Até aqui, tipo referência e tipo valor (seção [8.1](#81-tipos-referência-vs-tipos-valor)) foram tratados como dois mundos separados. Esta seção mostra a ponte oficial entre eles.
+
+#### Boxing
+
+**Boxing** é o processo de converter um objeto **tipo valor** (um primitivo) para um objeto **tipo referência** compatível:
+
+```java
+int x = 20;
+
+Object obj = x;
+```
+
+```
+Stack                Heap
+┌─────────┐          ┌──────┐
+│ x = 20   │          │  20   │
+├─────────┤          └──────┘
+│ obj ●────┼─────────────▲
+└─────────┘
+```
+
+`x` continua sendo uma caixa comum na Stack (tipo valor, seção [8.1](#81-tipos-referência-vs-tipos-valor)). Mas `obj` é uma **referência de verdade** — o valor `20` foi "embrulhado" (daí *boxing*, de *box*, caixa) num objeto no Heap, e `obj` aponta para ele.
+
+#### Unboxing
+
+**Unboxing** é o processo inverso: converter um objeto **tipo referência** de volta para um objeto **tipo valor** compatível:
+
+```java
+int x = 20;
+
+Object obj = x;
+
+int y = (int) obj;
+```
+
+```
+Stack                Heap
+┌─────────┐          ┌──────┐
+│ x = 20   │          │  20   │
+├─────────┤          └──────┘
+│ y = 20   │             ▲
+├─────────┤             │
+│ obj ●────┼─────────────┘
+└─────────┘
+```
+
+`y` "desembrulha" o valor guardado no objeto apontado por `obj` e o copia de volta para uma caixa comum na Stack — voltando a ser um tipo valor independente.
+
+#### Wrapper classes
+
+**Wrapper classes** ("classes empacotadoras") são classes equivalentes a cada tipo primitivo — é para elas que o boxing converte, e delas que o unboxing parte:
+
+| Primitivo | Wrapper class |
+|---|---|
+| `byte` | `Byte` |
+| `short` | `Short` |
+| `int` | `Integer` |
+| `long` | `Long` |
+| `float` | `Float` |
+| `double` | `Double` |
+| `boolean` | `Boolean` |
+| `char` | `Character` |
+
+```mermaid
+classDiagram
+    Object <|-- Number
+    Object <|-- Boolean
+    Object <|-- Character
+    Number <|-- Byte
+    Number <|-- Short
+    Number <|-- Integer
+    Number <|-- Long
+    Number <|-- Float
+    Number <|-- Double
+```
+
+Em Java, **boxing e unboxing são automáticos** (chamados de *autoboxing*/*auto-unboxing*) — não é preciso escrever nenhuma conversão manual:
+
+```java
+Integer x = 10;   // autoboxing: o literal int 10 já "nasce" empacotado num Integer
+int y = x * 2;    // auto-unboxing: x é desempacotado de volta pra int para a conta funcionar
+```
+
+> 💡 **Analogia:** pense num primitivo como um produto solto na prateleira, e o wrapper como o mesmo produto dentro de uma caixa lacrada, pronta para envio (só objetos — coisas "embaladas" — podem entrar no sistema de encomendas/correios, que aqui representa tudo que exige um tipo referência). *Boxing* é embalar o produto; *unboxing* é abrir a caixa para usar o produto direto de novo. Java faz essa embalagem/desembalagem sozinho, sempre que o contexto exige um tipo ou outro.
+
+**Uso comum — campos de entidades em sistemas de informação:** este é o motivo prático mais importante para usar wrapper classes, segundo o próprio material do curso. Como tipos referência aceitam `null` e usufruem dos recursos de OO, é comum ver campos de entidade declarados assim:
+
+```java
+public class Product {
+    public String name;
+    public Double price;
+    public Integer quantity;
+    // ...
+}
+```
+
+Em vez de `double price` e `int quantity`. A diferença na prática:
+
+#### Exemplos consolidando o uso real
+
+1. **Distinguir "não informado" de "zero":** com `int quantity`, não existe forma de representar "esse produto ainda não teve a quantidade preenchida" — o valor padrão já é `0` (seção [8.1](#81-tipos-referência-vs-tipos-valor)), então `0` e "não informado" ficam indistinguíveis. Com `Integer quantity`, o campo pode ser `null` (verdadeiramente vazio) **ou** `0` (preenchido, e o valor é zero mesmo) — dois estados diferentes, representáveis sem gambiarra.
+
+   ```java
+   Integer quantity = null; // ainda não sabemos quantas unidades existem
+   // ...
+   if (quantity == null) {
+       System.out.println("Quantidade ainda não cadastrada.");
+   }
+   ```
+
+2. **Coleções genéricas só aceitam tipos referência:** uma `List` (que ainda veremos em detalhe) não pode ser declarada com tipo primitivo — `List<int>` nem compila. Precisa ser `List<Integer>`:
+
+   ```java
+   List<Integer> ages = new ArrayList<>();
+   ages.add(25); // autoboxing: o int 25 vira Integer aqui, automaticamente
+   ```
+
+3. **Cuidado ao comparar wrappers com `==`:** como wrapper classes são tipos referência, `==` compara **se são o mesmo objeto** (o mesmo endereço no Heap, seção [8.1](#81-tipos-referência-vs-tipos-valor)) — não se os valores são iguais. Java otimiza e reaproveita objetos `Integer` para valores pequenos (entre -128 e 127), o que mascara o problema até ele aparecer com valores maiores:
+
+   ```java
+   Integer a = 100;
+   Integer b = 100;
+   System.out.println(a == b);        // true (valores pequenos, objeto reaproveitado)
+
+   Integer c = 200;
+   Integer d = 200;
+   System.out.println(c == d);        // false! são dois objetos Integer diferentes
+   System.out.println(c.equals(d));   // true — a forma correta de comparar valores
+   ```
+
+   > ⚠️ A regra prática: para comparar o **valor** de dois wrappers, use sempre `.equals(...)`, nunca `==`. O `==` só é seguro para primitivos de verdade (`int a == int b`), porque aí não existe objeto envolvido — apenas comparação direta de valores nas caixas da Stack.
 
 ---
 
