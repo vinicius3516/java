@@ -3923,3 +3923,199 @@ Busy rooms:
 
 > 💡 **Dois usos de vetor que já vimos separados, agora juntos:** `clientList` tem tamanho **fixo** (10 — os dez quartos, existam ou não inquilinos), e o **índice do vetor é o próprio número do quarto** (`clientList[room] = ...`), não uma posição sequencial preenchida em ordem — por isso o relatório final já sai naturalmente ordenado por quarto, só percorrendo o vetor de `0` a `9`. E como nem todo quarto é ocupado, as posições não usadas continuam com o valor padrão de um tipo referência: `null` (seção [8.1](#81-tipos-referência-vs-tipos-valor)) — daí o `if (clientList[i] != null)` para pular os quartos vagos.
 </details>
+
+<details>
+<summary><strong>Exercício — Reajuste de salário numa lista de funcionários</strong></summary>
+
+**Enunciado:** ler um número inteiro `N` e os dados (`id`, nome e salário) de `N` funcionários. Em seguida, efetuar o aumento de `X` por cento no salário de um funcionário específico — lendo um `id` e o valor `X`. Se o `id` informado não existir, mostrar uma mensagem e **abortar a operação**. Ao final, mostrar a listagem atualizada dos funcionários. É preciso aplicar encapsulamento para que o salário não possa ser alterado livremente — só através de uma operação de aumento por porcentagem.
+
+```java
+package entities;
+
+public class Employee {
+    private Integer id;
+    private String name;
+    private Double salary;
+
+    public Employee(Integer id, String name, Double salary) {
+        this.id = id;
+        this.name = name;
+        this.salary = salary;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Double getSalary() {
+        return salary;
+    }
+
+    public void salaryIncrease(double percentage) {
+        double discoveryIncrease = percentage / 100 + 1;
+        this.salary *= discoveryIncrease;
+    }
+
+    @Override
+    public String toString() {
+        return id + ", " + name + ", " + String.format("%.2f", salary);
+    }
+}
+```
+
+**A parte que travou: encontrar o funcionário certo dentro da lista para chamar `salaryIncrease` nele.** Duas soluções válidas, usando técnicas diferentes já vistas neste material:
+
+**Com stream/filter/findFirst (seção [8.8](#88-listas--parte-2-operações-predicados-e-expressões-lambda)) — a solução da correção:**
+
+```java
+Employee emp = list.stream().filter(x -> x.getId() == userID).findFirst().orElse(null);
+
+if (emp == null) {
+    System.out.println("This id does not exist!");
+} else {
+    System.out.print("Enter the percentage: ");
+    double percentage = sc.nextDouble();
+    emp.salaryIncrease(percentage);
+}
+```
+
+**Com um `for` tradicional e uma referência declarada fora do laço (seções [4.7](#47-escopo-e-inicialização-de-variáveis) e [8.1](#81-tipos-referência-vs-tipos-valor)) — mesmo resultado:**
+
+```java
+Employee emp = null;
+for (Employee x : list) {
+    if (x.getId() == userID) {
+        emp = x;
+        break;
+    }
+}
+
+if (emp == null) {
+    System.out.println("This id does not exist!");
+} else {
+    System.out.print("Enter the percentage: ");
+    double percentage = sc.nextDouble();
+    emp.salaryIncrease(percentage);
+}
+```
+
+A ideia central é a mesma nos dois casos: declarar `emp` **fora** do laço (ou deixar o `stream` devolver isso pronto), começando em `null` ("ainda não achei ninguém" — seção [8.1](#81-tipos-referência-vs-tipos-valor)), e só substituir por um valor de verdade quando a busca encontra o funcionário certo. Assim, depois do laço/stream, `emp == null` já responde sozinho "achei ou não achei" — e, se achou, `emp` já é a referência exata para chamar `.salaryIncrease(...)`.
+
+**Programa completo (versão com stream, a mesma da correção):**
+
+```java
+package application;
+
+import entities.Employee;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Locale.setDefault(Locale.US);
+
+        List<Employee> list = new ArrayList<>();
+
+        System.out.print("How many employees will be registered? ");
+        int qntRegistered = sc.nextInt();
+
+        for (int i = 0; i < qntRegistered; i++) {
+            System.out.println();
+            int count = i + 1;
+            System.out.println("Emplyoee #" + count + " :");
+            System.out.print("Id: ");
+            int id = sc.nextInt();
+            System.out.print("Name: ");
+            sc.nextLine();
+            String name = sc.nextLine();
+            System.out.print("Salary: ");
+            double salary = sc.nextDouble();
+
+            list.add(new Employee(id, name, salary));
+        }
+
+        System.out.println();
+        System.out.print("Enter the employee id that will have salary increase: ");
+        int userID = sc.nextInt();
+
+        Employee emp = list.stream().filter(x -> x.getId() == userID).findFirst().orElse(null);
+
+        if (emp == null) {
+            System.out.println("This id does not exist!");
+        } else {
+            System.out.print("Enter the percentage: ");
+            double percentage = sc.nextDouble();
+            emp.salaryIncrease(percentage);
+        }
+
+        System.out.println();
+        System.out.println("List of employees:");
+        for (Employee obj : list) {
+            System.out.println(obj);
+        }
+    }
+}
+```
+
+**Saída (exemplo 1 — id encontrado):**
+
+```
+How many employees will be registered? 3
+
+Emplyoee #1 :
+Id: 333
+Name: Maria Brown
+Salary: 4000.00
+
+Emplyoee #2 :
+Id: 536
+Name: Alex Grey
+Salary: 3000.00
+
+Emplyoee #3 :
+Id: 772
+Name: Bob Green
+Salary: 5000.00
+
+Enter the employee id that will have salary increase: 536
+Enter the percentage: 10.0
+
+List of employees:
+333, Maria Brown, 4000.00
+536, Alex Grey, 3300.00
+772, Bob Green, 5000.00
+```
+
+**Saída (exemplo 2 — id inexistente, operação abortada):**
+
+```
+How many employees will be registered? 2
+
+Emplyoee #1 :
+Id: 333
+Name: Maria Brown
+Salary: 4000.00
+
+Emplyoee #2 :
+Id: 536
+Name: Alex Grey
+Salary: 3000.00
+
+Enter the employee id that will have salary increase: 776
+This id does not exist!
+
+List of employees:
+333, Maria Brown, 4000.00
+536, Alex Grey, 3000.00
+```
+
+> 💡 **Por que `x.getId() == userID` não cai na pegadinha da seção [8.5](#85-boxing-unboxing-e-wrapper-classes)?** `getId()` retorna um `Integer` (wrapper), mas `userID` é um `int` (primitivo). Quando um `==` compara um wrapper com um primitivo, o Java faz *auto-unboxing* do lado wrapper antes de comparar — ou seja, a comparação acaba sendo entre dois `int` de verdade, por valor. O problema do cache (`Integer == Integer` além de -128 a 127) só existe quando **os dois lados** são wrapper — aqui não é o caso.
+</details>
