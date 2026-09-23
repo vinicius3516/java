@@ -64,6 +64,7 @@
    - [8.6 Laço `for each`](#86-laço-for-each)
    - [8.7 Listas — Parte 1](#87-listas--parte-1)
    - [8.8 Listas — Parte 2 (operações, predicados e expressões lambda)](#88-listas--parte-2-operações-predicados-e-expressões-lambda)
+   - [8.9 Matrizes (teoria)](#89-matrizes-teoria)
 9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
@@ -3019,6 +3020,35 @@ Percorrendo a lógica do `Demo`:
 5. `list.stream().filter(x -> x.charAt(0) == 'J').findFirst().orElse(null)` procura o primeiro elemento começando com `'J'`; como não existe nenhum, `findFirst()` não encontra nada e `.orElse(null)` devolve `null` como valor padrão.
 
 > ⚠️ **Uma diferença em relação ao material de apoio:** o professor converteu o resultado do `filter` de volta para lista com `.collect(Collectors.toList())`. Nesta implementação, o próprio IntelliJ sugeriu `.toList()` no final da cadeia — mais curto, e o programa funciona identicamente. A diferença real entre os dois (sutil, mas vale saber): `.toList()` (adicionado na API de Streams a partir do Java 16) sempre devolve uma lista **imutável** (tentar `result.add(...)` depois lançaria erro); já `Collectors.toList()` não dá nenhuma garantia formal sobre o tipo devolvido — na prática costuma ser uma lista mutável, mas isso é detalhe de implementação, não uma garantia da API. Para este exercício (onde `result` só é lido, nunca alterado), os dois se comportam exatamente igual.
+
+### 8.9 Matrizes (teoria)
+
+Esta aula cobriu só a **teoria** de matrizes — a prática (declaração, instanciação, acesso aos elementos e a propriedade `length`) fica para a próxima aula.
+
+Em programação, **matriz** é o nome dado a arranjos **bidimensionais**. Vale já guardar uma forma de pensar sobre ela: uma matriz é, essencialmente, um **"vetor de vetores"** — cada posição de uma dimensão poderia ser vista como um vetor à parte na outra dimensão.
+
+Assim como o vetor (seção [8.3](#83-vetores--parte-1)), uma matriz é uma estrutura de dados:
+
+- **Homogênea** — todos os elementos são do mesmo tipo.
+- **Ordenada** — os elementos são acessados por posição, agora com **dois índices** (linha e coluna) em vez de um só.
+- **Alocada de uma vez só**, num bloco contíguo de memória.
+
+| Vantagens | Desvantagens |
+|---|---|
+| Acesso imediato a qualquer elemento pela sua posição (linha, coluna) | Tamanho fixo |
+| | Dificuldade para inserir ou remover elementos |
+
+> 💡 Repare que são **exatamente as mesmas** vantagens e desvantagens do vetor (seção [8.3](#83-vetores--parte-1)) — faz sentido, já que uma matriz é estruturalmente a mesma ideia, apenas estendida para duas dimensões.
+
+**Exemplo conceitual — uma matriz `myMat` de 3 linhas por 4 colunas:**
+
+| | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| **0** | 3.5 | 17.0 | 12.3 | 8.2 |
+| **1** | 4.1 | 6.2 | 7.5 | 2.9 |
+| **2** | 11.0 | 9.5 | 14.8 | 21.7 |
+
+Cada elemento de `myMat` é localizado por um par (linha, coluna) — por exemplo, o valor `7.5` está na linha `1`, coluna `2`.
 
 ---
 
