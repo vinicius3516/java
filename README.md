@@ -65,6 +65,7 @@
    - [8.7 Listas — Parte 1](#87-listas--parte-1)
    - [8.8 Listas — Parte 2 (operações, predicados e expressões lambda)](#88-listas--parte-2-operações-predicados-e-expressões-lambda)
    - [8.9 Matrizes (teoria)](#89-matrizes-teoria)
+   - [8.10 Matrizes na prática: linhas, colunas e um exemplo simples](#810-matrizes-na-prática-linhas-colunas-e-um-exemplo-simples)
 9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
 
 ---
@@ -3049,6 +3050,113 @@ Assim como o vetor (seção [8.3](#83-vetores--parte-1)), uma matriz é uma estr
 | **2** | 11.0 | 9.5 | 14.8 | 21.7 |
 
 Cada elemento de `myMat` é localizado por um par (linha, coluna) — por exemplo, o valor `7.5` está na linha `1`, coluna `2`.
+
+### 8.10 Matrizes na prática: linhas, colunas e um exemplo simples
+
+Antes mesmo da aula prática oficial do curso, um exercício próprio ajudou a fixar o conceito: um programa para ler `id`, nome e email de `N` usuários, guardando tudo numa matriz.
+
+#### O que de fato são "linha" e "coluna" em `[][]`
+
+A convenção universal (a mesma da matemática) é: **o primeiro índice é sempre a linha, o segundo é sempre a coluna** — `mat[linha][coluna]`.
+
+```java
+String[][] mat = new String[u][3];
+```
+
+Isso cria uma matriz com `u` **linhas** e `3` **colunas**.
+
+> 💡 **Analogia:** pense numa planilha. Cada **linha** é um registro completo — aqui, **um usuário**. Cada **coluna** é um campo daquele registro — aqui, **id, nome, email** (colunas `0`, `1` e `2`). `mat[i][j]` é "vá até a linha `i`, depois ande até a coluna `j`" — exatamente como apontar para uma célula específica de uma planilha.
+
+Duas propriedades derivam direto disso:
+
+- `mat.length` → quantidade de **linhas** (quantos usuários existem).
+- `mat[i].length` → quantidade de **colunas daquela linha** (aqui, sempre `3`).
+
+#### O programa
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Locale.setDefault(Locale.US);
+
+        System.out.print("Informe a quantidade de usuarios: ");
+        int u = sc.nextInt();
+        sc.nextLine();
+
+        String[][] mat = new String[u][3];
+
+        for (int i = 0; i < mat.length; i++) {
+            System.out.println();
+            System.out.println("Usuario #" + (i + 1));
+
+            System.out.print("Id: ");
+            mat[i][0] = sc.nextLine();
+
+            System.out.print("Nome: ");
+            mat[i][1] = sc.nextLine();
+
+            System.out.print("Email: ");
+            mat[i][2] = sc.nextLine();
+        }
+
+        System.out.println();
+        System.out.println("Usuarios cadastrados:");
+        for (int i = 0; i < mat.length; i++) {
+            for (int j = 0; j < mat[i].length; j++) {
+                System.out.print(mat[i][j] + " | ");
+            }
+            System.out.println();
+        }
+
+        sc.close();
+    }
+}
+```
+
+**Saída (exemplo com 2 usuários):**
+
+```
+Informe a quantidade de usuarios: 2
+
+Usuario #1
+Id: 1
+Nome: Joao Silva
+Email: joao@gmail.com
+
+Usuario #2
+Id: 2
+Nome: Maria Souza
+Email: maria@gmail.com
+
+Usuarios cadastrados:
+1 | Joao Silva | joao@gmail.com |
+2 | Maria Souza | maria@gmail.com |
+```
+
+Repare que **preencher** e **percorrer** a matriz pedem abordagens diferentes: para preencher, já se sabe exatamente quais são as 3 colunas (`mat[i][0]`, `mat[i][1]`, `mat[i][2]`), então um único `for` (das linhas) resolve. Para **imprimir tudo**, sem saber de antemão quantas colunas existem em cada linha, um `for` de dentro do outro — percorrendo `mat[i].length` — é o que garante passar por cada célula, seja qual for o tamanho da matriz.
+
+#### Os erros da primeira tentativa
+
+A primeira versão desse programa tinha três bugs, todos instrutivos:
+
+```java
+for (int j = 0; j < mat[i].length; i++) {  // ❌ incrementa 'i', não 'j'
+    mat[i][j] = sc.nextLine();
+    break;                                   // ❌ sai do laço logo na 1ª volta
+}
+```
+
+1. **`break` incondicional** dentro do laço de colunas — ele executava sempre, na primeira volta, então o laço nunca passava da primeira posição: só `mat[i][0]` (o id) era preenchido, nome e email nunca eram lidos.
+2. **Incremento errado** (`i++` em vez de `j++`) — mesmo sem o `break`, isso bagunçaria tudo: `j` nunca mudaria, e o `i` do laço de fora (que já estava sendo controlado por ele mesmo) levaria incrementos indevidos vindos de dentro.
+3. Na hora de **imprimir**, os índices apareciam **invertidos** (`mat[j][i]` em vez de `mat[i][j]`) — uma confusão fácil de acontecer bem no momento em que "linha" e "coluna" ainda não estão automáticos na cabeça.
+
+> 💡 Também faltava um `sc.nextLine();` logo depois do `sc.nextInt()` que lê `u` — o mesmo problema clássico do `Scanner` já documentado na seção [3.7](#37-entrada-de-dados-scanner): sem esse "descarte", o primeiro `nextLine()` do laço consumiria a quebra de linha pendente e leria o primeiro campo como vazio.
 
 ---
 
