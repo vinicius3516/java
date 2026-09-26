@@ -70,6 +70,7 @@
     - [10.1 Data-Hora — Introdução: local, global e duração](#101-data-hora--introdução-local-global-e-duração)
     - [10.2 Entendendo timezone (fuso horário)](#102-entendendo-timezone-fuso-horário)
     - [10.3 Padrão ISO 8601](#103-padrão-iso-8601)
+    - [10.4 Instanciando data-hora em Java](#104-instanciando-data-hora-em-java)
 11. [Exercícios Resolvidos](#11-exercícios-resolvidos)
 
 ---
@@ -3236,6 +3237,90 @@ O dado salvo (no banco de dados, numa API) é sempre o mesmo instante universal 
 ```
 
 > 💡 Repare no padrão: quanto mais preciso o momento, mais coisa aparece à direita (frações de segundo) — e a única diferença estrutural entre local e global é o **sufixo de fuso** no final (`Z` ou `±HH:MM`).
+
+### 10.4 Instanciando data-hora em Java
+
+Na prática, Java representa os conceitos da seção [10.1](#101-data-hora--introdução-local-global-e-duração) com classes específicas do pacote `java.time`:
+
+- **`LocalDate`** / **`LocalDateTime`** → data-[hora] **local** (sem fuso).
+- **`Instant`** → data-hora **global** (sempre um instante universal, internamente em UTC).
+
+Existem quatro formas diferentes de **instanciar** uma dessas classes, cada uma resolvendo um problema real diferente:
+
+| Forma de instanciar | Exemplo | O que faz | Caso de uso real |
+|---|---|---|---|
+| **Momento atual** | `LocalDate.now()`<br>`LocalDateTime.now()`<br>`Instant.now()` | Captura o instante exato em que o código está rodando | Registrar quando um registro foi criado (`createdAt`), timestamp de um log, "comentário postado agora" |
+| **Texto ISO 8601** | `LocalDate.parse("2022-07-20")`<br>`LocalDateTime.parse("2022-07-20T01:30:26")`<br>`Instant.parse("2022-07-20T01:30:26Z")` | Converte um texto já no padrão ISO 8601 (seção [10.3](#103-padrão-iso-8601)) direto para o objeto de data-hora | Converter uma data-hora recebida de uma API/JSON — que quase sempre chega em ISO 8601 — para um objeto manipulável em Java |
+| **Texto em formato customizado** | `LocalDate.parse("20/07/2022", fmt1)`, com `fmt1 = DateTimeFormatter.ofPattern("dd/MM/yyyy")` | Converte um texto num formato **não-ISO**, desde que se informe o padrão exato daquele formato | Ler uma data digitada num formulário brasileiro (`dd/MM/yyyy`), ou importar uma planilha/CSV com datas fora do padrão ISO |
+| **Componentes separados** | `LocalDate.of(2022, 7, 20)`<br>`LocalDateTime.of(2022, 7, 20, 1, 30)` | Monta a data-hora diretamente a partir de dia, mês, ano (e hora/minuto) — sem nenhum texto envolvido | Montar uma data a partir de três campos separados de um formulário (dia/mês/ano em `<select>`s distintos), ou gerar datas de teste no código |
+
+> 📚 **Referência oficial** citada no material da aula: [`DateTimeFormatter`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html), na documentação da Oracle — é lá que se consulta o significado de cada letra de um padrão customizado (`dd`, `MM`, `yyyy`, `HH`, `mm`, etc.).
+
+**O programa completo, testando as quatro formas:**
+
+```java
+package application;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class Program {
+
+    public static void main(String[] args) {
+
+        // https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html
+        DateTimeFormatter fmt1 = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter fmt2 = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+        LocalDate d01 = LocalDate.now();
+        LocalDateTime d02 = LocalDateTime.now();
+        Instant d03 = Instant.now();
+
+        LocalDate d04 = LocalDate.parse("2022-07-20");
+        LocalDateTime d05 = LocalDateTime.parse("2022-07-20T01:30:26");
+        Instant d06 = Instant.parse("2022-07-20T01:30:26Z");
+        Instant d07 = Instant.parse("2022-07-20T01:30:26-03:00");
+
+        LocalDate d08 = LocalDate.parse("20/07/2022", fmt1);
+        LocalDateTime d09 = LocalDateTime.parse("20/07/2022 01:30", fmt2);
+
+        LocalDate d10 = LocalDate.of(2022, 07, 20);
+        LocalDateTime d11 = LocalDateTime.of(2022, 07, 20, 1, 30);
+
+        System.out.println("d01 = " + d01.toString());
+        System.out.println("d02 = " + d02.toString());
+        System.out.println("d03 = " + d03.toString());
+        System.out.println("d04 = " + d04.toString());
+        System.out.println("d05 = " + d05.toString());
+        System.out.println("d06 = " + d06.toString());
+        System.out.println("d07 = " + d07.toString());
+        System.out.println("d08 = " + d08.toString());
+        System.out.println("d09 = " + d09.toString());
+        System.out.println("d10 = " + d10.toString());
+        System.out.println("d11 = " + d11.toString());
+    }
+}
+```
+
+**Saída (`d01`/`d02`/`d03` variam conforme o momento em que o programa roda — os demais são fixos):**
+
+```
+d01 = 2026-09-26
+d02 = 2026-09-26T07:52:45.289931601
+d03 = 2026-09-26T10:52:45.289961937Z
+d04 = 2022-07-20
+d05 = 2022-07-20T01:30:26
+d06 = 2022-07-20T01:30:26Z
+d07 = 2022-07-20T04:30:26Z
+d08 = 2022-07-20
+d09 = 2022-07-20T01:30
+d10 = 2022-07-20
+d11 = 2022-07-20T01:30
+```
+
+> 💡 **Reparando em `d07`:** o texto de entrada foi `"2022-07-20T01:30:26-03:00"` (01:30:26 no fuso `-03:00`), mas o `Instant` impresso mostra `2022-07-20T04:30:26Z`. Isso não é erro — é a prova concreta do conceito da seção [10.1](#101-data-hora--introdução-local-global-e-duração): um `Instant` representa **sempre** o mesmo ponto universal no tempo, e por padrão é exibido em UTC (`Z`), não importa qual fuso foi usado para criá-lo. `01:30:26` no fuso `-03:00` **é**, literalmente, o mesmo instante que `04:30:26Z` (`01:30 + 3h = 04:30`) — só a forma de escrever mudou, o momento real é idêntico.
 
 ---
 
