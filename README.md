@@ -66,7 +66,9 @@
    - [8.8 Listas — Parte 2 (operações, predicados e expressões lambda)](#88-listas--parte-2-operações-predicados-e-expressões-lambda)
    - [8.9 Matrizes (teoria)](#89-matrizes-teoria)
    - [8.10 Matrizes na prática: linhas, colunas e um exemplo simples](#810-matrizes-na-prática-linhas-colunas-e-um-exemplo-simples)
-9. [Exercícios Resolvidos](#9-exercícios-resolvidos)
+10. [Tópicos Especiais em Java](#10-tópicos-especiais-em-java)
+    - [10.1 Data-Hora — Introdução: local, global e duração](#101-data-hora--introdução-local-global-e-duração)
+11. [Exercícios Resolvidos](#11-exercícios-resolvidos)
 
 ---
 
@@ -3160,7 +3162,49 @@ for (int j = 0; j < mat[i].length; i++) {  // ❌ incrementa 'i', não 'j'
 
 ---
 
-## 9. Exercícios Resolvidos
+## 10. Tópicos Especiais em Java
+
+### 10.1 Data-Hora — Introdução: local, global e duração
+
+Ao trabalhar com datas e horários em código, existem **três conceitos diferentes** por trás do que parece, à primeira vista, ser "só uma data":
+
+| Conceito | Definição |
+|---|---|
+| **Data-[hora] local** | ano-mês-dia-[hora], **sem** fuso horário — a hora é opcional |
+| **Data-hora global** | ano-mês-dia-hora, **com** fuso horário |
+| **Duração** | tempo decorrido **entre** duas data-horas |
+
+> 💡 **Analogia rápida para os três:** escrever "reunião às 15h" num calendário de parede, dentro de um único escritório, é **data-hora local** — ninguém ali precisa se perguntar "15h de onde?", está implícito. Já marcar uma videochamada com pessoas em três países é **data-hora global** — é preciso fixar um instante universal exato, que cada participante depois converte pro seu próprio horário. E medir "quanto tempo essa chamada durou" é **duração** — não importa em que fuso ela começou, só importa o intervalo decorrido.
+
+#### Quando usar cada uma
+
+**Data-[hora] local** — quando o momento exato **não** interessa a pessoas de outro fuso horário. Uso comum: sistemas de região única, planilhas (Excel).
+
+- *"Data de nascimento: `15/06/2001`"*
+- *"Data-hora da venda: `13/08/2022 às 15:32`"* (presumindo que o fuso não importa aqui)
+
+**Data-hora global** — quando o momento exato **interessa** a pessoas de outro fuso horário. Uso comum: sistemas multi-região, aplicações web.
+
+- *"Quando será o sorteio? `21/08/2022 às 20h (horário de São Paulo)`"*
+- *"Quando o comentário foi postado? `há 17 minutos`"*
+- *"Quando foi realizada a venda? `13/08/2022 às 15:32 (horário de São Paulo)`"*
+- *"Início e fim do evento? `21/08/2022 às 14h até 16h (horário de São Paulo)`"*
+
+#### Exemplo — o mesmo instante, exibido diferente por fuso horário
+
+Este é o ponto-chave de data-hora **global**: existe **um único instante real** no universo, mas cada pessoa o enxerga formatado no seu próprio horário local. O instante `2022-07-23T14:30:00Z` (`Z` = UTC, fuso zero), por exemplo, dispara a mesma notificação — *"A live começa:"* — com horários diferentes para cada usuário:
+
+| Local do usuário | Fuso horário | Horário exibido |
+|---|---|---|
+| Londres / UTC | GMT+0 | 14:30 |
+| Portugal | GMT+1 | 15:30 |
+| São Paulo | GMT-3 | 11:30 |
+
+O dado salvo (no banco de dados, numa API) é sempre o mesmo instante universal — só a **apresentação** muda, calculada a partir do fuso de quem está olhando.
+
+---
+
+## 11. Exercícios Resolvidos
 
 ### Estrutura Sequencial
 
