@@ -4257,3 +4257,93 @@ List of employees:
 
 > 💡 **Por que `x.getId() == userID` não cai na pegadinha da seção [8.5](#85-boxing-unboxing-e-wrapper-classes)?** `getId()` retorna um `Integer` (wrapper), mas `userID` é um `int` (primitivo). Quando um `==` compara um wrapper com um primitivo, o Java faz *auto-unboxing* do lado wrapper antes de comparar — ou seja, a comparação acaba sendo entre dois `int` de verdade, por valor. O problema do cache (`Integer == Integer` além de -128 a 127) só existe quando **os dois lados** são wrapper — aqui não é o caso.
 </details>
+
+<details>
+<summary><strong>Exercício — Vizinhos de um número numa matriz (esquerda, cima, direita, abaixo)</strong></summary>
+
+**Enunciado:** ler dois números inteiros `M` e `N`, e depois uma matriz de `M` linhas por `N` colunas contendo números inteiros (podendo haver repetições). Em seguida, ler um número inteiro `X` que pertence à matriz. Para cada ocorrência de `X`, mostrar os valores à esquerda, acima, à direita e abaixo de `X`, **quando houver**.
+
+```java
+package application;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Locale.setDefault(Locale.US);
+
+        System.out.print("Informe o valor de L: ");
+        int l = sc.nextInt();
+
+        System.out.print("Informe o valor de C: ");
+        int c = sc.nextInt();
+
+        int[][] mat = new int[l][c];
+
+        for (int i = 0; i < mat.length; i++) {
+            for (int j = 0; j < mat[i].length; j++) {
+                mat[i][j] = sc.nextInt();
+            }
+        }
+
+        System.out.print("Informe algum numero da matriz: ");
+        int x = sc.nextInt();
+        System.out.println();
+
+        for (int i = 0; i < mat.length; i++) {
+            for (int j = 0; j < mat[i].length; j++) {
+                if (mat[i][j] == x) {
+                    System.out.println("Position " + i + "," + j + ":");
+
+                    if (j > 0) {
+                        System.out.println("Left: " + mat[i][j - 1]);
+                    }
+                    if (i > 0) {
+                        System.out.println("Up: " + mat[i - 1][j]);
+                    }
+                    if (j < mat[i].length - 1) {
+                        System.out.println("Right: " + mat[i][j + 1]);
+                    }
+                    if (i < mat.length - 1) {
+                        System.out.println("Down: " + mat[i + 1][j]);
+                    }
+                }
+            }
+        }
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+3
+4
+10 8 15 12
+21 11 23 8
+14 5 13 19
+8
+
+Position 0,1:
+Left: 10
+Right: 15
+Down: 11
+Position 1,3:
+Left: 23
+Up: 12
+Down: 19
+```
+
+> 💡 **A lógica das quatro direções — cada uma com sua própria "existe?":** ao contrário de assumir que todo vizinho existe, cada direção é protegida por uma condição de limite independente:
+>
+> - **Esquerda** existe se `j > 0` (não está na primeira coluna).
+> - **Acima** existe se `i > 0` (não está na primeira linha).
+> - **Direita** existe se `j < mat[i].length - 1` (não está na última coluna).
+> - **Abaixo** existe se `i < mat.length - 1` (não está na última linha).
+>
+> É exatamente por isso que a posição `(0,1)` (primeira linha) mostra `Left`/`Right`/`Down` mas não `Up`, e a posição `(1,3)` (última coluna) mostra `Left`/`Up`/`Down` mas não `Right` — sem essas verificações, tentar acessar `mat[i][j-1]` com `j = 0` (ou `mat[i][j+1]` com `j` na última coluna) lançaria `ArrayIndexOutOfBoundsException`.
+</details>
