@@ -72,6 +72,7 @@
     - [10.3 Padrão ISO 8601](#103-padrão-iso-8601)
     - [10.4 Instanciando data-hora em Java](#104-instanciando-data-hora-em-java)
     - [10.5 Convertendo data-hora para texto](#105-convertendo-data-hora-para-texto)
+    - [10.6 Convertendo data-hora global para local, e obtendo componentes](#106-convertendo-data-hora-global-para-local-e-obtendo-componentes)
 11. [Exercícios Resolvidos](#11-exercícios-resolvidos)
 
 ---
@@ -3437,6 +3438,85 @@ d06 = 2022-07-20T01:30:26Z
 ```
 
 > ⚠️ **A saída de `d06` depende do fuso da máquina:** rodar esse mesmo código em outra máquina, com outro fuso configurado (`ZoneId.systemDefault()` seria diferente), mudaria o resultado da primeira linha de `d06` (`fmt3.format(d06)`) — as outras duas (`fmt5`/`toString()`) continuariam iguais, porque não dependem de fuso nenhum, sempre mostram o instante em UTC.
+
+### 10.6 Convertendo data-hora global para local, e obtendo componentes
+
+Esta aula junta duas operações da lista de [10.1](#101-data-hora--introdução-local-global-e-duração): **converter** uma data-hora global em local (de verdade, virando um novo objeto — não só formatando um texto, como em [10.5](#105-convertendo-data-hora-para-texto)), e **extrair** pedaços (dia, mês, ano, hora...) de uma data-hora já existente.
+
+#### Convertendo `Instant` (global) em `LocalDate`/`LocalDateTime` (local)
+
+| Técnica | Exemplo | O que faz | Caso de uso real |
+|---|---|---|---|
+| `LocalDate.ofInstant(instant, zoneId)` | `LocalDate.ofInstant(d06, ZoneId.systemDefault())` | Converte um `Instant` (global) para uma **data local de verdade**, aplicando o fuso informado | Exibir só a data (sem hora) de um evento global, já convertida para o fuso do usuário |
+| `LocalDateTime.ofInstant(instant, zoneId)` | `LocalDateTime.ofInstant(d06, ZoneId.of("Portugal"))` | Mesma conversão, preservando também o horário | Mostrar data **e** hora completas de um evento, já no fuso de quem está vendo |
+
+A diferença para a seção [10.5](#105-convertendo-data-hora-para-texto) é importante: lá, `.withZone(...)` só mudava **como o texto aparecia** (a data-hora continuava sendo, por baixo dos panos, o mesmo `Instant`). Aqui, `ofInstant(...)` gera um **objeto novo**, de um tipo diferente (`LocalDate`/`LocalDateTime`) — de fato local, sem mais nenhuma pegada de fuso horário nele.
+
+**Duas formas de indicar o fuso:**
+
+```java
+ZoneId.systemDefault()   // o fuso configurado na máquina onde o programa roda
+ZoneId.of("Portugal")    // um fuso específico, indicado pelo nome
+```
+
+> 💡 Como saber quais nomes são aceitos em `ZoneId.of(...)`? O próprio Java expõe essa lista: `ZoneId.getAvailableZoneIds()` devolve todos os identificadores válidos (`"America/Sao_Paulo"`, `"Portugal"`, `"US/Pacific"`, e centenas de outros). É comum, numa aula assim, rodar um `for` só pra imprimir essa lista inteira e conferir o nome exato antes de usá-lo no código.
+
+**Exemplo prático, convertendo o mesmo `Instant` para dois fusos diferentes:**
+
+```java
+Instant d06 = Instant.parse("2022-07-20T01:30:26Z");
+
+LocalDate r1 = LocalDate.ofInstant(d06, ZoneId.systemDefault());  // fuso da máquina (GMT-3, neste caso)
+LocalDate r2 = LocalDate.ofInstant(d06, ZoneId.of("Portugal"));   // GMT+1
+
+LocalDateTime r3 = LocalDateTime.ofInstant(d06, ZoneId.systemDefault());
+LocalDateTime r4 = LocalDateTime.ofInstant(d06, ZoneId.of("Portugal"));
+```
+
+**Saída (rodando numa máquina no fuso `America/Sao_Paulo`, GMT-3):**
+
+```
+r1 = 2022-07-19
+r2 = 2022-07-20
+r3 = 2022-07-19T22:30:26
+r4 = 2022-07-20T02:30:26
+```
+
+> 💡 **Mesmo instante, datas diferentes — de novo:** `01:30:26Z` (UTC) em GMT-3 vira `22:30:26` do dia **anterior** (`r1`/`r3` caem em `19/07`); o mesmo instante em GMT+1 (Portugal) vira `02:30:26` do **mesmo** dia (`r2`/`r4` ficam em `20/07`). É a mesma lição de [10.5](#105-convertendo-data-hora-para-texto) reforçada: a diferença entre os dois fusos (GMT-3 para GMT+1 é uma diferença de 4 horas) é grande o bastante pra empurrar `01:30` da madrugada para o dia anterior num fuso, mas não no outro.
+
+#### Obtendo componentes de uma data-hora local
+
+| Método | Exemplo | Retorna | Caso de uso real |
+|---|---|---|---|
+| `.getDayOfMonth()` | `d04.getDayOfMonth()` | O dia do mês (1 a 31) | Validar regras de negócio por dia (ex: "só aceita pedidos até o dia 5") |
+| `.getMonthValue()` | `d04.getMonthValue()` | O mês, como número (1 a 12) | Agrupar registros por mês num relatório |
+| `.getYear()` | `d04.getYear()` | O ano | Calcular idade a partir de uma data de nascimento, filtrar registros por ano |
+| `.getHour()` | `d05.getHour()` | A hora (0 a 23) | Aplicar uma regra que só vale em certo horário (ex: "desconto entre 18h e 20h") |
+| `.getMinute()` | `d05.getMinute()` | O minuto (0 a 59) | Exibir separadamente "Hora: X Minuto: Y" num formulário de edição |
+
+```java
+LocalDate d04 = LocalDate.parse("2022-07-20");
+LocalDateTime d05 = LocalDateTime.parse("2022-07-20T01:30:26");
+
+System.out.println("d04 dia = " + d04.getDayOfMonth());
+System.out.println("d04 mês = " + d04.getMonthValue());
+System.out.println("d04 ano = " + d04.getYear());
+
+System.out.println("d05 hora = " + d05.getHour());
+System.out.println("d05 minutos = " + d05.getMinute());
+```
+
+**Saída:**
+
+```
+d04 dia = 20
+d04 mês = 7
+d04 ano = 2022
+d05 hora = 1
+d05 minutos = 30
+```
+
+> 💡 Repare que esses métodos só existem em `LocalDate`/`LocalDateTime` (tipos **locais**) — fazem todo sentido aí, porque "dia", "mês" e "hora" só existem depois que uma data-hora já foi quebrada segundo um calendário/fuso específico. Um `Instant` puro não tem `getDayOfMonth()` — é exatamente por isso que a conversão da primeira parte desta seção (`ofInstant(...)`) precisa acontecer **antes** de tentar extrair qualquer componente de uma data-hora que nasceu global.
 
 ---
 
