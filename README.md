@@ -71,6 +71,7 @@
     - [10.2 Entendendo timezone (fuso horário)](#102-entendendo-timezone-fuso-horário)
     - [10.3 Padrão ISO 8601](#103-padrão-iso-8601)
     - [10.4 Instanciando data-hora em Java](#104-instanciando-data-hora-em-java)
+    - [10.5 Convertendo data-hora para texto](#105-convertendo-data-hora-para-texto)
 11. [Exercícios Resolvidos](#11-exercícios-resolvidos)
 
 ---
@@ -3321,6 +3322,121 @@ d11 = 2022-07-20T01:30
 ```
 
 > 💡 **Reparando em `d07`:** o texto de entrada foi `"2022-07-20T01:30:26-03:00"` (01:30:26 no fuso `-03:00`), mas o `Instant` impresso mostra `2022-07-20T04:30:26Z`. Isso não é erro — é a prova concreta do conceito da seção [10.1](#101-data-hora--introdução-local-global-e-duração): um `Instant` representa **sempre** o mesmo ponto universal no tempo, e por padrão é exibido em UTC (`Z`), não importa qual fuso foi usado para criá-lo. `01:30:26` no fuso `-03:00` **é**, literalmente, o mesmo instante que `04:30:26Z` (`01:30 + 3h = 04:30`) — só a forma de escrever mudou, o momento real é idêntico.
+
+### 10.5 Convertendo data-hora para texto
+
+Se a aula anterior foi "texto → data-hora" (instanciação), esta é o caminho inverso: **data-hora → texto**, usando o mesmo `DateTimeFormatter` de [10.4](#104-instanciando-data-hora-em-java), agora no sentido de formatação.
+
+| Técnica | Exemplo | O que faz | Quando usar |
+|---|---|---|---|
+| **`.format(formatter)`** (chamando pela data) | `d04.format(fmt1)` | Converte a data-hora para texto, aplicando as regras do `formatter` recebido | Forma mais comum — "formate esta data com este padrão" |
+| **`formatter.format(date)`** (chamando pelo formatter) | `fmt1.format(d04)` | Mesmo resultado de `.format`, só invertendo quem chama quem | Útil quando o formatter já está em mãos e vai ser reaplicado a várias datas diferentes (ex: num laço) |
+| **Formatter inline, sem variável** | `d04.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))` | Cria o `DateTimeFormatter` direto na própria chamada, sem guardá-lo numa variável | Formatação pontual, usada uma única vez — não compensa nomear uma variável só para isso |
+| **Formatter com fuso — `.withZone(...)`** | `DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.systemDefault())` | Anexa um fuso horário ao formatter, fazendo-o **converter** um `Instant` (global) para o horário local daquele fuso antes de formatar | Exibir, no fuso do usuário, uma data-hora global salva no banco — ex: horário de criação de um pedido, mostrado já convertido pro fuso de quem está vendo |
+| **Formatters pré-definidos** | `DateTimeFormatter.ISO_DATE_TIME`, `DateTimeFormatter.ISO_INSTANT` | Constantes prontas da própria classe para os formatos ISO 8601 mais comuns, sem escrever o padrão manualmente | Gerar/consumir datas em ISO 8601 — o formato universal de troca de dados entre sistemas (APIs, JSON) — sem risco de errar o padrão na mão |
+| **`toString()` padrão (sem formatter)** | `d06.toString()` | `LocalDate`, `LocalDateTime` e `Instant` já sabem se converter para texto sozinhos, no padrão ISO 8601, sem precisar de nenhum `DateTimeFormatter` | Quando o ISO 8601 puro já resolve — logs internos, chaves de cache, depuração |
+
+#### `.format(formatter)` vs. `formatter.format(date)` — duas sintaxes, mesmo resultado
+
+```java
+System.out.println(d04.format(fmt1));   // chamando o format() a partir da data
+System.out.println(fmt1.format(d04));   // chamando o format() a partir do formatter
+```
+
+As duas linhas imprimem exatamente a mesma coisa — Java só oferece o método `format` dos dois lados (na data-hora e no formatter) para dar flexibilidade em como o código fica mais natural de ler, dependendo do contexto. Não existe um "certo" ou "errado" aqui, só preferência de estilo.
+
+#### O ponto central da aula: `.withZone(ZoneId.systemDefault())`
+
+Este é o detalhe mais importante — e o que realmente diferencia formatar um `LocalDate`/`LocalDateTime` de formatar um `Instant`.
+
+Um `Instant` **não tem** noção própria de "dia", "mês" ou "hora local" — ele é só um ponto puro na linha do tempo universal (seção [10.1](#101-data-hora--introdução-local-global-e-duração)). Então, o que acontece se tentarmos formatá-lo com um padrão que pede esses campos, sem informar nenhum fuso?
+
+```java
+Instant d06 = Instant.parse("2022-07-20T01:30:26Z");
+DateTimeFormatter fmt2 = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+System.out.println(fmt2.format(d06));
+```
+
+```
+Exception in thread "main" java.time.temporal.UnsupportedTemporalTypeException: Unsupported field: DayOfMonth
+```
+
+**Erro de verdade** (testei para confirmar) — porque "dia do mês" só existe depois que o instante universal é "quebrado" segundo **algum** calendário/fuso específico, e o `Instant` sozinho não sabe qual fuso usar para fazer essa quebra. É exatamente essa informação que falta e que o `.withZone(...)` fornece:
+
+```java
+DateTimeFormatter fmt3 = DateTimeFormatter
+        .ofPattern("dd/MM/yyyy HH:mm")
+        .withZone(ZoneId.systemDefault());
+
+System.out.println(fmt3.format(d06));
+```
+
+`ZoneId.systemDefault()` pega o fuso horário configurado na **máquina onde o programa está rodando**. Com o formatter "sabendo" qual fuso usar, ele consegue converter o instante universal para uma data e hora de calendário de verdade, e só então aplicar o padrão `dd/MM/yyyy HH:mm`.
+
+> 💡 **Na prática, rodando numa máquina configurada para `America/Sao_Paulo` (GMT-3):** `d06` é o instante `2022-07-20T01:30:26Z` (01:30:26 em UTC). Convertido para GMT-3 (3 horas **atrás** de UTC), esse mesmo instante cai em `19/07/2022 22:30` — **um dia antes** do que aparece no texto ISO original! Isso mostra bem por que a conversão de fuso importa de verdade: sem ela, um sistema poderia mostrar a data errada para o usuário, não só a hora errada.
+
+#### Formatters pré-definidos e o `toString()` padrão
+
+`DateTimeFormatter.ISO_DATE_TIME` e `DateTimeFormatter.ISO_INSTANT` são constantes já prontas na própria classe, para quando o formato desejado já é um dos padrões ISO 8601 — evita ter que escrever o *pattern* na mão e arriscar errar um detalhe.
+
+E vale lembrar: `LocalDate`, `LocalDateTime` e `Instant` **já vêm** com um `toString()` próprio, que devolve o texto no padrão ISO 8601 sem precisar de nenhum `DateTimeFormatter` — foi isso que já tínhamos usado, sem perceber, em toda a seção [10.4](#104-instanciando-data-hora-em-java).
+
+#### O programa completo
+
+```java
+package application;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+
+public class Program {
+
+    public static void main(String[] args) {
+
+        LocalDate d04 = LocalDate.parse("2022-07-20");
+        LocalDateTime d05 = LocalDateTime.parse("2022-07-20T01:30:26");
+        Instant d06 = Instant.parse("2022-07-20T01:30:26Z");
+
+        DateTimeFormatter fmt1 = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter fmt2 = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        DateTimeFormatter fmt3 = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.systemDefault());
+        DateTimeFormatter fmt4 = DateTimeFormatter.ISO_DATE_TIME;
+        DateTimeFormatter fmt5 = DateTimeFormatter.ISO_INSTANT;
+
+        System.out.println("d04 = " + d04.format(fmt1));
+        System.out.println("d04 = " + fmt1.format(d04));
+        System.out.println("d04 = " + d04.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+
+        System.out.println("d05 = " + d05.format(fmt1));
+        System.out.println("d05 = " + d05.format(fmt2));
+        System.out.println("d05 = " + d05.format(fmt4));
+
+        System.out.println("d06 = " + fmt3.format(d06));
+        System.out.println("d06 = " + fmt5.format(d06));
+        System.out.println("d06 = " + d06.toString());
+    }
+}
+```
+
+**Saída (rodando numa máquina no fuso `America/Sao_Paulo`, GMT-3):**
+
+```
+d04 = 20/07/2022
+d04 = 20/07/2022
+d04 = 20/07/2022
+d05 = 20/07/2022
+d05 = 20/07/2022 01:30
+d05 = 2022-07-20T01:30:26
+d06 = 19/07/2022 22:30
+d06 = 2022-07-20T01:30:26Z
+d06 = 2022-07-20T01:30:26Z
+```
+
+> ⚠️ **A saída de `d06` depende do fuso da máquina:** rodar esse mesmo código em outra máquina, com outro fuso configurado (`ZoneId.systemDefault()` seria diferente), mudaria o resultado da primeira linha de `d06` (`fmt3.format(d06)`) — as outras duas (`fmt5`/`toString()`) continuariam iguais, porque não dependem de fuso nenhum, sempre mostram o instante em UTC.
 
 ---
 
