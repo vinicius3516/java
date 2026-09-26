@@ -73,6 +73,7 @@
     - [10.4 Instanciando data-hora em Java](#104-instanciando-data-hora-em-java)
     - [10.5 Convertendo data-hora para texto](#105-convertendo-data-hora-para-texto)
     - [10.6 Convertendo data-hora global para local, e obtendo componentes](#106-convertendo-data-hora-global-para-local-e-obtendo-componentes)
+    - [10.7 Calculando com data-hora](#107-calculando-com-data-hora)
 11. [Exercícios Resolvidos](#11-exercícios-resolvidos)
 
 ---
@@ -3517,6 +3518,64 @@ d05 minutos = 30
 ```
 
 > 💡 Repare que esses métodos só existem em `LocalDate`/`LocalDateTime` (tipos **locais**) — fazem todo sentido aí, porque "dia", "mês" e "hora" só existem depois que uma data-hora já foi quebrada segundo um calendário/fuso específico. Um `Instant` puro não tem `getDayOfMonth()` — é exatamente por isso que a conversão da primeira parte desta seção (`ofInstant(...)`) precisa acontecer **antes** de tentar extrair qualquer componente de uma data-hora que nasceu global.
+
+### 10.7 Calculando com data-hora
+
+Última das operações previstas em [10.1](#101-data-hora--introdução-local-global-e-duração): fazer **cálculos** com data-hora — somar/subtrair um período, e medir a **duração** entre duas data-horas.
+
+#### Somando e subtraindo um período
+
+| Técnica | Exemplo | Quando usar |
+|---|---|---|
+| `.plusDays(n)` / `.minusDays(n)` | `d04.minusDays(7)` (em `LocalDate` ou `LocalDateTime`) | Calcular uma data no passado/futuro em relação a uma data local — ex: "data de vencimento = hoje + 30 dias" |
+| `.plus(n, unidade)` / `.minus(n, unidade)` | `d06.minus(7, ChronoUnit.DAYS)` (em `Instant`) | Mesma ideia, mas para um `Instant` — a unidade (`ChronoUnit.DAYS`, `HOURS`, `MINUTES`...) é informada explicitamente |
+
+```java
+LocalDate pastWeekDate = d04.minusDays(7);
+LocalDate nextWeekDate = d04.plusDays(7);
+
+LocalDateTime pastWeekLocalDate = d05.minusDays(7);
+LocalDateTime nextWeekLocalDate = d05.plusDays(7);
+
+Instant pastWeekInstant = d06.minus(7, ChronoUnit.DAYS);
+Instant nextWeekInstant = d06.plus(7, ChronoUnit.DAYS);
+```
+
+> 💡 **Por que `Instant` usa `.minus(7, ChronoUnit.DAYS)` em vez de um `.minusDays(7)` direto, se ele nem tem `getDayOfMonth()` (seção [10.6](#106-convertendo-data-hora-global-para-local-e-obtendo-componentes))?** A diferença é sutil, mas importante: **extrair** "dia do mês" exige saber em que calendário/fuso aquele instante cai — por isso `Instant` não tem esse getter. Mas **somar uma duração fixa de tempo** (7 dias = exatamente 7 × 24h = 604.800 segundos) não depende de calendário nenhum, é matemática pura sobre a linha do tempo. É por isso que `Instant` aceita `plus`/`minus` com uma unidade de tempo (`ChronoUnit`), mesmo sem ter os getters de calendário.
+
+#### Medindo a duração entre duas data-horas
+
+`Duration.between(inicio, fim)` calcula o tempo decorrido entre duas data-horas — o terceiro conceito da seção [10.1](#101-data-hora--introdução-local-global-e-duração), finalmente em código.
+
+```java
+Duration t1 = Duration.between(pastWeekDate.atStartOfDay(), d04.atStartOfDay());
+Duration t2 = Duration.between(pastWeekLocalDate, d05);
+Duration t3 = Duration.between(pastWeekInstant, d06);
+Duration t4 = Duration.between(d06, pastWeekInstant);
+```
+
+**Saída:**
+
+```
+pastWeekDate = 2022-07-13
+nextWeekDate = 2022-07-27
+pastWeekLocalDate = 2022-07-13T01:30:26
+nextWeekLocalDate = 2022-07-27T01:30:26
+pastWeekInstant = 2022-07-13T01:30:26Z
+nextWeekInstant = 2022-07-27T01:30:26Z
+t1 dias = 7
+t2 dias = 7
+t3 dias = 7
+t4 dias = -7
+```
+
+Dois detalhes que valem atenção:
+
+> ⚠️ **Por que `t1` precisou de `.atStartOfDay()`?** `Duration` mede tempo **exato** (horas, minutos, segundos) — e um `LocalDate` puro não tem nenhum componente de horário, só data. Por isso, `Duration.between` não aceita dois `LocalDate` diretamente: é preciso primeiro convertê-los para um ponto no tempo com horário, e `.atStartOfDay()` faz exatamente isso — transforma a data em `LocalDateTime` na meia-noite daquele dia (`2022-07-13T00:00:00`), viabilizando o cálculo. `t2` (com `LocalDateTime`) e `t3` (com `Instant`) não precisam desse truque, porque os dois já têm horário embutido.
+
+> ⚠️ **A ordem dos argumentos importa — e muito:** `t3` é `Duration.between(pastWeekInstant, d06)` (passado → presente) e dá `7`; `t4` é `Duration.between(d06, pastWeekInstant)` (presente → passado, argumentos invertidos) e dá `-7`. `Duration.between(inicio, fim)` calcula sempre `fim - início` — inverter a ordem inverte o sinal do resultado. Isso não é bug nem acaso: é assim que se representa, por exemplo, "quanto tempo falta" (positivo) versus "quanto tempo já passou" (negativo), dependendo de qual dos dois instantes é passado primeiro.
+
+> 💡 `.toDays()` converte a `Duration` (que internamente guarda segundos/nanossegundos) para um número inteiro de dias, **truncando** qualquer resto — `Duration.between(...).toDays()` com um intervalo de "6 dias e 20 horas", por exemplo, retornaria `6`, não `7`. Nos exemplos acima o intervalo é sempre exatamente 7 dias completos, então não há truncamento visível.
 
 ---
 
