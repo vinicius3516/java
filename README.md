@@ -68,6 +68,7 @@
    - [8.10 Matrizes na prática: linhas, colunas e um exemplo simples](#810-matrizes-na-prática-linhas-colunas-e-um-exemplo-simples)
 10. [Tópicos Especiais em Java](#10-tópicos-especiais-em-java)
     - [10.1 Data-Hora — Introdução: local, global e duração](#101-data-hora--introdução-local-global-e-duração)
+    - [10.2 Entendendo timezone (fuso horário)](#102-entendendo-timezone-fuso-horário)
 11. [Exercícios Resolvidos](#11-exercícios-resolvidos)
 
 ---
@@ -3201,6 +3202,16 @@ Este é o ponto-chave de data-hora **global**: existe **um único instante real*
 | São Paulo | GMT-3 | 11:30 |
 
 O dado salvo (no banco de dados, numa API) é sempre o mesmo instante universal — só a **apresentação** muda, calculada a partir do fuso de quem está olhando.
+
+### 10.2 Entendendo timezone (fuso horário)
+
+- **GMT** (*Greenwich Mean Time*) — o horário de Londres.
+- **UTC** (*Coordinated Universal Time*) — o padrão universal, também chamado de **"Z"** ou *Zulu time*. Na prática, equivalente ao GMT para a maioria dos usos.
+- Todo outro fuso horário é definido **em relação** ao GMT/UTC:
+  - São Paulo: `GMT-3`
+  - Manaus: `GMT-4`
+  - Portugal: `GMT+1`
+- Muitas linguagens e tecnologias também identificam fusos por **nome**, em vez de só o deslocamento numérico — por exemplo, `"US/Pacific"`, `"America/Sao_Paulo"`.
 
 ---
 
