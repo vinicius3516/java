@@ -69,6 +69,7 @@
 10. [Tópicos Especiais em Java](#10-tópicos-especiais-em-java)
     - [10.1 Data-Hora — Introdução: local, global e duração](#101-data-hora--introdução-local-global-e-duração)
     - [10.2 Entendendo timezone (fuso horário)](#102-entendendo-timezone-fuso-horário)
+    - [10.3 Padrão ISO 8601](#103-padrão-iso-8601)
 11. [Exercícios Resolvidos](#11-exercícios-resolvidos)
 
 ---
@@ -3212,6 +3213,29 @@ O dado salvo (no banco de dados, numa API) é sempre o mesmo instante universal 
   - Manaus: `GMT-4`
   - Portugal: `GMT+1`
 - Muitas linguagens e tecnologias também identificam fusos por **nome**, em vez de só o deslocamento numérico — por exemplo, `"US/Pacific"`, `"America/Sao_Paulo"`.
+
+### 10.3 Padrão ISO 8601
+
+É o formato de texto padrão para representar data-hora, usado pela maioria das linguagens e APIs. A letra `T` separa a parte da data da parte da hora.
+
+**Data-[hora] local** (sem indicação de fuso):
+
+```
+2022-07-21                 // ano-mês-dia
+2022-07-21T14:52           // ano-mês-dia + hora:minuto
+2022-07-22T14:52:09        // ano-mês-dia + hora:minuto:segundo
+2022-07-22T14:52:09.4073   // ano-mês-dia + hora:minuto:segundo.fração-de-segundo
+```
+
+**Data-hora global** (sempre com indicação de fuso — `Z` para UTC, ou um deslocamento explícito):
+
+```
+2022-07-23T14:52:09Z             // ano-mês-dia + hora:minuto:segundo, fuso UTC ("Z")
+2022-07-23T14:52:09.254935Z      // ano-mês-dia + hora:minuto:segundo.fração-de-segundo, fuso UTC ("Z")
+2022-07-23T14:52:09-03:00        // ano-mês-dia + hora:minuto:segundo, fuso GMT-3 (deslocamento explícito)
+```
+
+> 💡 Repare no padrão: quanto mais preciso o momento, mais coisa aparece à direita (frações de segundo) — e a única diferença estrutural entre local e global é o **sufixo de fuso** no final (`Z` ou `±HH:MM`).
 
 ---
 
