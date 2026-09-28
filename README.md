@@ -76,6 +76,7 @@
     - [10.7 Calculando com data-hora](#107-calculando-com-data-hora)
 12. [Enumerações e Composição](#12-enumerações-e-composição)
     - [12.1 Enumerações](#121-enumerações)
+    - [12.2 Composição](#122-composição)
 13. [Exercícios Resolvidos](#13-exercícios-resolvidos)
 
 ---
@@ -3739,6 +3740,53 @@ classDiagram
 ```
 
 O estereótipo `<<enumeration>>` no topo da caixa é o que sinaliza, em UML, que aquilo não é uma classe comum — é um enum. Embaixo dele, em vez de atributos e métodos (como nos diagramas de classe já vistos na seção [7.8](#78-representando-classes-em-uml)), aparecem só os **valores possíveis**.
+
+### 12.2 Composição
+
+Esta aula foi mais sobre **design** do que sobre código novo: como organizar e representar a relação entre classes de um sistema maior.
+
+#### Categorias de classes
+
+Num sistema orientado a objetos, "tudo" tecnicamente é objeto — mas, por questões de organização, flexibilidade, reuso e delegação, é comum separar as classes em **categorias**, cada uma com uma responsabilidade própria:
+
+| Categoria | Papel típico |
+|---|---|
+| **Entities** | Representam os dados/conceitos centrais do domínio — é a categoria que praticamente todo este material já usou (`Product`, `Order`, `Employee`...) |
+| **Services** | Concentram a lógica de negócio — as regras e operações que atuam sobre as entidades |
+| **Controllers** | Recebem uma solicitação externa (ex: de uma tela ou de uma requisição web) e acionam o serviço certo pra tratá-la |
+| **Repositories** | Responsáveis por buscar e persistir entidades (tipicamente, acesso a banco de dados) |
+| **Views** | Responsáveis pela apresentação/exibição dos dados para quem usa o sistema |
+
+> 💬 Essas descrições de papel são um resumo geral de mercado sobre o que cada categoria costuma significar — o material do curso, neste ponto, apenas nomeia as cinco categorias, sem detalhar cada uma ainda.
+
+#### O que é composição
+
+**Composição** é um tipo de associação que permite que um objeto **contenha** outro — uma relação **"tem-um"** ou **"tem-vários"**.
+
+**Vantagens:**
+
+- **Organização** — divisão de responsabilidades entre classes menores e mais focadas.
+- **Coesão** — cada classe cuida só daquilo que é seu.
+- **Flexibilidade** e **reuso** — uma "parte" bem definida pode, em tese, ser reaproveitada ou trocada sem afetar o "todo" inteiro.
+
+> 💡 **Analogia:** pense num carro e seu motor. O carro (o "todo") **tem-um** motor (a "parte") — o motor existe como uma peça própria, com sua própria responsabilidade, e o carro só delega pra ele a tarefa de gerar força. É mais fácil entender, manter e até trocar um motor sozinho do que lidar com um carro-motor-tudo-junto, indivisível.
+
+#### Como a composição é representada em UML
+
+A forma de representar composição num diagrama de classes é uma **seta ligando duas entidades**, com um **losango preto** numa das pontas: o losango fica do lado de quem é o **todo** da composição, e a outra ponta aponta para quem é a **parte**.
+
+```mermaid
+classDiagram
+    Todo *-- Parte
+```
+
+> 💬 Esse diagrama usa `Todo`/`Parte` como nomes-placeholder, só para ilustrar a notação em si (o losango preto do lado do "todo"). O material da aula também mostrou essa mesma notação aplicada a um caso real envolvendo uma classe de **Service** — bem provavelmente um `Service` (o todo) compondo um `Repository` ou uma `Entity` (a parte), já que é comum uma classe de serviço guardar, como atributo, uma referência ao repositório que ela usa para persistir dados. Não consegui renderizar a imagem exata desse slide neste ambiente — se puder confirmar os nomes das duas classes do diagrama, eu ajusto esse exemplo para refletir exatamente o que foi mostrado.
+
+**O ponto mais importante da aula, porém, foi este:**
+
+> ⚠️ **Composição não depende do losango estar desenhado.** O próprio material é explícito: mesmo **sem** o losango preto no diagrama, uma relação ainda pode — e deve — ser chamada de composição, desde que a entidade "todo" contenha, como atributo, algo que vem de outra entidade. Ou seja: o que define uma composição não é o desenho, é o **código** — uma classe `A` que tem um atributo do tipo `B` já é, na prática, `A` "tem-um" `B`, com ou sem diamante no papel.
+
+Isso conecta direto com algo que o material já vinha fazendo sem nomear: em [12.1](#121-enumerações), a classe `Order` tem um atributo do tipo `OrderStatus` — isso já é, tecnicamente, uma composição (`Order` "tem-um" `OrderStatus`), mesmo sem nenhum diagrama ter sido desenhado para essa relação específica.
 
 ---
 
