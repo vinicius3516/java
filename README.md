@@ -74,7 +74,9 @@
     - [10.5 Convertendo data-hora para texto](#105-convertendo-data-hora-para-texto)
     - [10.6 Convertendo data-hora global para local, e obtendo componentes](#106-convertendo-data-hora-global-para-local-e-obtendo-componentes)
     - [10.7 Calculando com data-hora](#107-calculando-com-data-hora)
-11. [Exercícios Resolvidos](#11-exercícios-resolvidos)
+12. [Enumerações e Composição](#12-enumerações-e-composição)
+    - [12.1 Enumerações](#121-enumerações)
+13. [Exercícios Resolvidos](#13-exercícios-resolvidos)
 
 ---
 
@@ -3579,7 +3581,168 @@ Dois detalhes que valem atenção:
 
 ---
 
-## 11. Exercícios Resolvidos
+## 12. Enumerações e Composição
+
+### 12.1 Enumerações
+
+#### O que é um enum, de forma simples
+
+Um **enum** (de *enumeration*) é um tipo especial que serve para representar **um conjunto fechado de valores possíveis** — uma lista fixa de opções, conhecida de antemão, onde nada além daquelas opções é um valor válido.
+
+> 💡 **Analogia:** pense nos dias da semana. Existem exatamente 7 opções válidas — "Segunda", "Terça", ..., "Domingo" — e nenhuma outra coisa faz sentido nesse espaço (não existe "Sextou-feira" ou "Blursday"). Um enum é exatamente isso, aplicado ao código: uma lista fechada de valores válidos, e só.
+
+A palavra-chave em Java é `enum`. A vantagem central de usá-lo, segundo o próprio material do curso, é **semântica** — código mais legível, e com uma rede de segurança extra: **o compilador passa a ajudar a garantir que só um valor válido seja usado**.
+
+> 📚 **Referência oficial:** [tutorial de `enum`](https://docs.oracle.com/javase/tutorial/java/javaOO/enum.html), na documentação da Oracle.
+
+#### O problema que o enum resolve
+
+Imagine representar o status de um pedido (`Order`) sem enum — por exemplo, usando uma `String`:
+
+```java
+private String status; // "PENDING_PAYMENT", "PROCESSING", "SHIPPED", "DELIVERED"?
+```
+
+Nada impede alguém de digitar `"shipped"` (minúsculo), `"Shiped"` (com erro de digitação), ou até `"bananas"` — o compilador não tem como saber que só quatro textos específicos fazem sentido ali. Esses erros só apareceriam **em tempo de execução** (ou nem apareceriam, silenciosamente corrompendo dados).
+
+Com um `enum`, os valores válidos passam a fazer parte do **tipo** em si:
+
+```java
+package entities.enums;
+
+public enum OrderStatus {
+    PENDING_PAYMENT,
+    PROCESSING,
+    SHIPPED,
+    DELIVERED;
+}
+```
+
+Agora, `OrderStatus` só pode valer uma dessas quatro coisas — tentar atribuir qualquer outra coisa a uma variável `OrderStatus` é **erro de compilação**, não um bug escondido esperando pra acontecer.
+
+#### Exemplo do curso: ciclo de vida de um pedido
+
+```java
+package entities;
+
+import entities.enums.OrderStatus;
+
+import java.util.Date;
+
+public class Order {
+    private Integer id;
+    private final Date moment;
+    private final OrderStatus status;
+
+    public Order(Integer id, Date moment, OrderStatus status) {
+        this.id = id;
+        this.moment = moment;
+        this.status = status;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public Date getMoment() {
+        return moment;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    @Override
+    public String toString() {
+        return "Order{" +
+                "id=" + id +
+                ", moment=" + moment +
+                ", status=" + status +
+                '}';
+    }
+}
+```
+
+```java
+package application;
+
+import entities.Order;
+import entities.enums.OrderStatus;
+
+import java.util.Date;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Order order = new Order(1080, new Date(), OrderStatus.DELIVERED);
+
+        System.out.print(order);
+    }
+}
+```
+
+**Saída:**
+
+```
+Order{id=1080, moment=Mon Sep 28 05:23:56 GMT-03:00 2026, status=DELIVERED}
+```
+
+> 💬 Repare que `moment` usa `java.util.Date` — uma classe **anterior** ao `java.time` que estudamos inteiro na seção [10](#10-tópicos-especiais-em-java). `Date` ainda aparece bastante em código mais antigo, mas hoje em dia o próprio `java.time` (com `LocalDateTime`/`Instant`) é a escolha recomendada para código novo.
+
+#### A palavra-chave `final` em atributos de instância
+
+O IntelliJ sugeriu adicionar `final` a `moment` e `status`. Isso é uma inspeção de qualidade de código chamada, em geral, *"Field may be 'final'"* — ela dispara sempre que um atributo é atribuído **só uma vez** (no construtor, ou já na própria declaração) e **nunca mais** é reatribuído em nenhum outro lugar da classe.
+
+```java
+private final Date moment;
+private final OrderStatus status;
+```
+
+**O que `final` garante:** depois de atribuído (aqui, dentro do construtor), aquele campo **nunca mais pode ser reatribuído** — nem por um método da própria classe. Tentar fazer isso é erro de compilação, não um aviso.
+
+**Para que serve, na prática:**
+
+1. **Documenta a intenção** — quem lê a classe já sabe, só olhando a declaração, que `moment` e `status` de um `Order` nunca mudam depois de criado. Não é preciso vasculhar a classe inteira atrás de algum método escondido que os altere.
+2. **O compilador garante isso de verdade** — se, no futuro, alguém tentar adicionar um método que reatribui `status`, o código simplesmente não compila. Vira impossível introduzir esse bug por acidente.
+3. **É a base de objetos imutáveis** — uma classe onde todo atributo é `final` (e não exposto para alteração de outra forma) é um objeto cujo estado nunca muda depois de criado. Isso é especialmente valioso quando o mesmo objeto é acessado de vários lugares ao mesmo tempo, mas mesmo em código simples já ajuda a raciocinar sobre o programa com mais confiança.
+
+> 💡 **Não confundir com o `static final` da seção [7.11](#711-membros-estáticos):** lá, `public static final double PI` era uma **única constante, compartilhada por todos** — o mesmo valor pra qualquer instância. Aqui, `final` sozinho (sem `static`) significa algo mais restrito: **cada objeto `Order` tem seu próprio `moment`/`status`**, e cada um é fixado assim que aquele objeto específico é criado — dois pedidos diferentes têm valores `final` diferentes entre si, só que cada um imutável dentro de si mesmo.
+
+> 🔍 **Um detalhe pra reparar:** `id` **não** ganhou `final`, mesmo também sendo atribuído só uma vez no construtor e nunca mais alterado nesta classe — estruturalmente, se qualificaria para a mesma sugestão. Vale conferir se o IntelliJ também sinalizou `id` e ele passou despercebido, ou se foi uma escolha deliberada de deixá-lo mutável (por exemplo, prevendo que um id gerado pelo banco de dados possa ser atribuído depois da criação do objeto — um padrão comum em sistemas reais).
+
+#### Conversão de `String` para `enum`
+
+```java
+OrderStatus os1 = OrderStatus.DELIVERED;
+OrderStatus os2 = OrderStatus.valueOf("DELIVERED");
+```
+
+`valueOf(String)` é um método que **todo enum já ganha automaticamente**, sem precisar escrever nada — ele converte um texto no valor correspondente do enum, desde que o texto bata **exatamente** (letra por letra, maiúsculas/minúsculas incluídas) com o nome de uma constante.
+
+> ⚠️ **Case-sensitive de verdade — testei para confirmar:** `OrderStatus.valueOf("delivered")` (minúsculo) não retorna `DELIVERED` nem `null` — lança uma exceção:
+> ```
+> java.lang.IllegalArgumentException: No enum constant ...OrderStatus.delivered
+> ```
+> Na prática, isso importa muito quando o valor vem de fora do programa — por exemplo, lido de um banco de dados, de um JSON de uma API, ou digitado por um usuário. Vale sempre garantir que o texto está exatamente no formato esperado antes de chamar `valueOf`, ou tratar essa exceção.
+
+#### Representação UML de um enum
+
+```mermaid
+classDiagram
+    class OrderStatus {
+        <<enumeration>>
+        PENDING_PAYMENT
+        PROCESSING
+        SHIPPED
+        DELIVERED
+    }
+```
+
+O estereótipo `<<enumeration>>` no topo da caixa é o que sinaliza, em UML, que aquilo não é uma classe comum — é um enum. Embaixo dele, em vez de atributos e métodos (como nos diagramas de classe já vistos na seção [7.8](#78-representando-classes-em-uml)), aparecem só os **valores possíveis**.
+
+---
+
+## 13. Exercícios Resolvidos
 
 ### Estrutura Sequencial
 
