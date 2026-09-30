@@ -4977,3 +4977,267 @@ Down: 19
 >
 > É exatamente por isso que a posição `(0,1)` (primeira linha) mostra `Left`/`Right`/`Down` mas não `Up`, e a posição `(1,3)` (última coluna) mostra `Left`/`Up`/`Down` mas não `Right` — sem essas verificações, tentar acessar `mat[i][j-1]` com `j = 0` (ou `mat[i][j+1]` com `j` na última coluna) lançaria `ArrayIndexOutOfBoundsException`.
 </details>
+
+### Enumerações e Composição
+
+Exercícios práticos do módulo de **Enumerações e Composição** (seção [12](#12-enumerações-e-composição)).
+
+<details>
+<summary><strong>Exercício 1 — Renda mensal de um trabalhador com múltiplos contratos</strong></summary>
+
+**Enunciado:** ler os dados de um trabalhador com `N` contratos (`N` fornecido pelo usuário). Depois, solicitar do usuário um mês e mostrar qual foi o salário do funcionário naquele mês.
+
+Este exercício amarra os dois assuntos do módulo: `Worker` "tem-um" `Departament` e "tem-vários" `HourContract` (composição, seção [12.2](#122-composição)), além de usar `WorkLevel` como enum (seção [12.1](#121-enumerações)).
+
+```mermaid
+classDiagram
+    class Worker {
+        -String name
+        -WorkLevel level
+        -Double baseSalary
+        -List~HourContract~ contracts
+        -Departament departament
+        +addContract(contract HourContract) void
+        +removeContract(contract HourContract) void
+        +income(year int, month int) Double
+    }
+    class Departament {
+        -String name
+    }
+    class HourContract {
+        -LocalDate date
+        -Double valuePerHour
+        -Integer hour
+        +totalValue() Double
+    }
+    class WorkLevel {
+        <<enumeration>>
+        JUNIOR
+        MID_LEVEL
+        SENIOR
+    }
+    Worker *-- Departament
+    Worker *-- "many" HourContract
+    Worker --> WorkLevel
+```
+
+```java
+package entities.enums;
+
+public enum WorkLevel {
+    JUNIOR,
+    MID_LEVEL,
+    SENIOR;
+}
+```
+
+```java
+package entities;
+
+public class Departament {
+    private String name;
+
+    public Departament(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+}
+```
+
+```java
+package entities;
+
+import java.time.LocalDate;
+
+public class HourContract {
+    private LocalDate date;
+    private Double valuePerHour;
+    private Integer hour;
+
+    public HourContract(LocalDate date, Double valuePerHour, Integer hour) {
+        this.date = date;
+        this.valuePerHour = valuePerHour;
+        this.hour = hour;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public Double getValuePerHour() {
+        return valuePerHour;
+    }
+
+    public Integer getHour() {
+        return hour;
+    }
+
+    public Double totalValue(){
+        return valuePerHour * hour;
+    }
+}
+```
+
+```java
+package entities;
+
+import entities.enums.WorkLevel;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Worker {
+    private String name;
+    private WorkLevel level;
+    private Double baseSalary;
+
+    private List<HourContract> contracts = new ArrayList<>();
+    private Departament departament;
+
+    public Worker(String name, WorkLevel level, Double baseSalary, Departament departament) {
+        this.name = name;
+        this.level = level;
+        this.baseSalary = baseSalary;
+        this.departament = departament;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public WorkLevel getLevel() {
+        return level;
+    }
+
+    public Double getBaseSalary() {
+        return baseSalary;
+    }
+
+    public Departament getDepartament() {
+        return departament;
+    }
+
+    public void addContract(HourContract contract) {
+        contracts.add(contract);
+    }
+
+    public void removeContract(HourContract contract) {
+        contracts.remove(contract);
+    }
+
+    public Double income(int year, int month) {
+        Double sum = baseSalary;
+        for (HourContract c : contracts) {
+            int y = c.getDate().getYear();
+            int m = c.getDate().getMonthValue();
+            if (year == y && month == m) {
+                sum += c.totalValue();
+            }
+        }
+        return sum;
+    }
+}
+```
+
+```java
+package application;
+
+import entities.Departament;
+import entities.HourContract;
+import entities.Worker;
+import entities.enums.WorkLevel;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Locale.setDefault(Locale.US);
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        System.out.print("Enter department's name: ");
+        String departament = sc.nextLine();
+        System.out.println("Enter worker data: ");
+        System.out.print("Name: ");
+        String name = sc.nextLine();
+        System.out.print("Level: ");
+        WorkLevel level = WorkLevel.valueOf(sc.next());
+        System.out.print("Base salary: ");
+        Double baseSalary = sc.nextDouble();
+        System.out.print("How many contracts to this worker? ");
+        int n = sc.nextInt();
+
+        Worker worker = new Worker(name, level, baseSalary, new Departament(departament));
+
+        for (int i = 0; i < n; i++) {
+            System.out.println("Enter contract #" + (i + 1) + " data:");
+            System.out.print("Date (DD/MM/YYYY): ");
+            LocalDate date = LocalDate.parse(sc.next(), dtf);
+            System.out.print("Value per hour: ");
+            Double valuePerHour = sc.nextDouble();
+            System.out.print("Duration (hours): ");
+            int duration = sc.nextInt();
+
+            worker.addContract(new HourContract(date, valuePerHour, duration));
+        }
+
+        System.out.println();
+
+        sc.nextLine();
+        System.out.print("Enter month and year to calculate income (MM/YYYY): ");
+        String calcDate = sc.nextLine();
+        int calcMonth = Integer.parseInt(calcDate.substring(0, 2));
+        int calcYear = Integer.parseInt(calcDate.substring(3));
+        System.out.println("Name: " + worker.getName());
+        System.out.println("Departament: " + worker.getDepartament().getName());
+        System.out.print("Income for " + calcDate + ": " + worker.income(calcYear, calcMonth));
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Enter department's name: Design
+Enter worker data:
+Name: Alex
+Level: MID_LEVEL
+Base salary: 1200.00
+How many contracts to this worker? 3
+Enter contract #1 data:
+Date (DD/MM/YYYY): 20/08/2018
+Value per hour: 50.00
+Duration (hours): 20
+Enter contract #2 data:
+Date (DD/MM/YYYY): 13/06/2018
+Value per hour: 30.00
+Duration (hours): 18
+Enter contract #3 data:
+Date (DD/MM/YYYY): 25/08/2018
+Value per hour: 80.00
+Duration (hours): 10
+
+Enter month and year to calculate income (MM/YYYY): 08/2018
+Name: Alex
+Departament: Design
+Income for 08/2018: 3000.0
+```
+
+> 💡 **A composição em ação:** `Worker` guarda um único `Departament` (`private Departament departament;` — "tem-um") e uma **lista** de `HourContract` (`private List<HourContract> contracts = new ArrayList<>();` — "tem-vários"). Repare que essa lista já nasce instanciada **na própria declaração**, nunca ficando `null` — evitando o clássico `NullPointerException` ao tentar adicionar o primeiro contrato.
+>
+> 💡 **Encapsulamento aplicado à lista:** não existe um `getContracts()` devolvendo a lista interna diretamente — só `addContract(...)` e `removeContract(...)`. Isso é a mesma ideia da seção [7.15](#715-encapsulamento) (lembra do `Product` sem `setQuantity`?): a classe controla exatamente como sua coleção interna pode ser alterada, em vez de entregar uma referência mutável pra qualquer código de fora mexer livremente.
+>
+> 💡 **A lógica de `income(year, month)`:** começa com `baseSalary` e soma o `totalValue()` de cada contrato cujo `date` bate com o mês/ano pedido — o contrato de `13/06/2018` (junho) é ignorado no cálculo de agosto, exatamente como no exemplo (`1200 + (50×20) + (80×10) = 1200 + 1000 + 800 = 3000`).
+>
+> ⚠️ **Pequena diferença de formatação:** o enunciado mostra `Income for 08/2018: 3000.00` (duas casas decimais); a saída real aqui é `3000.0`, porque o valor é concatenado direto (`+ worker.income(...)`) sem `String.format("%.2f", ...)` ou `printf`. O valor calculado está correto — é só a exibição que ficaria mais fiel ao exemplo com uma formatação explícita, como vista em [3.5](#35-saída-de-dados-systemout).
+</details>
