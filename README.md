@@ -5241,3 +5241,298 @@ Income for 08/2018: 3000.0
 >
 > ⚠️ **Pequena diferença de formatação:** o enunciado mostra `Income for 08/2018: 3000.00` (duas casas decimais); a saída real aqui é `3000.0`, porque o valor é concatenado direto (`+ worker.income(...)`) sem `String.format("%.2f", ...)` ou `printf`. O valor calculado está correto — é só a exibição que ficaria mais fiel ao exemplo com uma formatação explícita, como vista em [3.5](#35-saída-de-dados-systemout).
 </details>
+
+<details>
+<summary><strong>Exercício 2 — Sumário de pedido (Client, Order, OrderItem, Product)</strong></summary>
+
+**Enunciado:** ler os dados de um pedido com `N` itens (`N` fornecido pelo usuário). Depois, mostrar um sumário do pedido. Nota do enunciado: o instante do pedido deve ser o instante do sistema.
+
+Esse é o exemplo clássico de composição em cadeia: `Order` "tem-um" `Client` e "tem-vários" `OrderItem`; cada `OrderItem`, por sua vez, "tem-um" `Product`.
+
+```mermaid
+classDiagram
+    class Order {
+        -LocalDateTime moment
+        -OrderStatus status
+        -List~OrderItem~ orderItems
+        -Client client
+        +addItem(orderItem OrderItem) void
+        +removeItem(orderItem OrderItem) void
+    }
+    class Client {
+        -String name
+        -String email
+        -LocalDate birthDate
+    }
+    class OrderItem {
+        -Integer quantity
+        -Double price
+        -Product product
+        +subTotal() Double
+    }
+    class Product {
+        -String name
+        -Double price
+    }
+    class OrderStatus {
+        <<enumeration>>
+        PENDING_PAYMENT
+        PROCESSING
+        SHIPPED
+        DELIVERED
+    }
+    Order *-- Client
+    Order *-- "many" OrderItem
+    OrderItem *-- Product
+    Order --> OrderStatus
+```
+
+```java
+package entities;
+
+import java.time.LocalDate;
+
+public class Client {
+    private String name;
+    private String email;
+    private LocalDate birthDate;
+
+    public Client(String name, String email, LocalDate birthDate) {
+        this.name = name;
+        this.email = email;
+        this.birthDate = birthDate;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public LocalDate getBrithDate() {
+        return birthDate;
+    }
+}
+```
+
+```java
+package entities;
+
+public class Product {
+    private String name;
+    private Double price;
+
+    public Product(String name, Double price) {
+        this.name = name;
+        this.price = price;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+}
+```
+
+```java
+package entities;
+
+public class OrderItem {
+    private Integer quantity;
+    private Double price;
+
+    private Product product;
+
+    public OrderItem(Integer quantity, Double price, Product product) {
+        this.quantity = quantity;
+        this.price = price;
+        this.product = product;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public Double subTotal() {
+        return price * quantity;
+    }
+}
+```
+
+```java
+package entities;
+
+import entities.enums.OrderStatus;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Order {
+    private LocalDateTime moment;
+    private OrderStatus status;
+
+    private List<OrderItem> orderItems = new ArrayList<>();
+    private Client client;
+
+    public Order() {
+    }
+
+    public Order(Client client, OrderStatus status, LocalDateTime moment) {
+        this.client = client;
+        this.status = status;
+        this.moment = moment;
+    }
+
+    public List<OrderItem> getOrderItems() {
+        return orderItems;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getMoment() {
+        return moment;
+    }
+
+    public Client getClient() {
+        return client;
+    }
+
+    public void addItem(OrderItem orderItem) {
+        orderItems.add(orderItem);
+    }
+
+    public void removeItem(OrderItem orderItem) {
+        orderItems.remove(orderItem);
+    }
+}
+```
+
+```java
+package application;
+
+import entities.Client;
+import entities.Order;
+import entities.OrderItem;
+import entities.Product;
+import entities.enums.OrderStatus;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Locale.setDefault(Locale.US);
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        System.out.println("Enter cliente data:");
+        System.out.print("Name: ");
+        String clientName = sc.nextLine();
+        System.out.print("E-mail: ");
+        String clientEmail = sc.nextLine();
+        System.out.print("Birth date (DD/MM/YYYY): ");
+        LocalDate clientBirthDate = LocalDate.parse(sc.next(), dtf);
+        LocalDateTime moment = LocalDateTime.now();
+        System.out.println("Enter order data:");
+        System.out.print("Status: ");
+        OrderStatus orderStatus = OrderStatus.valueOf(sc.next());
+        System.out.print("How many items to this order? ");
+        int n = sc.nextInt();
+        sc.nextLine();
+
+        Order order = new Order(new Client(clientName, clientEmail, clientBirthDate), orderStatus, moment);
+
+        for (int i = 0; i < n; i++) {
+            System.out.println("Enter #" + (i + 1) + " item data:");
+            System.out.print("Product name: ");
+            String productName = sc.nextLine();
+            System.out.print("Product price: ");
+            Double productPrice = sc.nextDouble();
+            System.out.print("Quantity: ");
+            int quantity = sc.nextInt();
+            sc.nextLine();
+
+            order.addItem(new OrderItem(quantity, productPrice, new Product(productName, productPrice)));
+        }
+
+        System.out.println();
+
+        DateTimeFormatter dtf1 = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+        System.out.println("ORDER SUMMARY:");
+        System.out.println("Order moment: " + order.getMoment().format(dtf1));
+        System.out.println("Order status: " + order.getStatus());
+        System.out.println("Client: " + order.getClient().getName() + " (" + order.getClient().getBrithDate().format(dtf) + ") " + " - " + order.getClient().getEmail());
+        System.out.println("Order items:");
+        Double sum = 0.0;
+        for (OrderItem o : order.getOrderItems()) {
+            System.out.println(o.getProduct().getName() + ", " + "$" + o.getProduct().getPrice() + ", " + "Quantity: " + o.getQuantity() + ", " + "Subtotal: $" + o.subTotal());
+            sum += o.subTotal();
+        }
+
+        System.out.println("Total price: $" + sum);
+
+        sc.close();
+    }
+}
+```
+
+**Saída (rodando aqui — o `Order moment` reflete o instante real da execução, exatamente como o enunciado pede):**
+
+```
+Enter cliente data:
+Name: Alex Green
+E-mail: alex@gmail.com
+Birth date (DD/MM/YYYY): 15/03/1985
+Enter order data:
+Status: PROCESSING
+How many items to this order? 2
+Enter #1 item data:
+Product name: TV
+Product price: 1000.00
+Quantity: 1
+Enter #2 item data:
+Product name: Mouse
+Product price: 40.00
+Quantity: 2
+
+ORDER SUMMARY:
+Order moment: 30/09/2026 09:20:33
+Order status: PROCESSING
+Client: Alex Green (15/03/1985)  - alex@gmail.com
+Order items:
+TV, $1000.0, Quantity: 1, Subtotal: $1000.0
+Mouse, $40.0, Quantity: 2, Subtotal: $80.0
+Total price: $1080.0
+```
+
+> 💡 **`new Order()` — um construtor vazio, de propósito:** repare que `Order` tem dois construtores (sobrecarga, seção [7.14](#714-sobrecarga)): um vazio (`public Order() {}`) e um completo. O vazio existe para casos em que se precisa de um objeto `Order` "em branco" para ir preenchendo aos poucos (útil, por exemplo, em frameworks que instanciam o objeto primeiro e usam *setters* depois) — aqui, porém, só o construtor completo é usado de fato.
+>
+> ⚠️ **Três pequenos deslizes, sem afetar o resultado:**
+> 1. `getBrithDate()` — typo no nome do método (`Brith` em vez de `Birth`). Funciona normalmente, só foge da convenção de nomes clara discutida em [7.7](#77-anatomia-de-um-método).
+> 2. Os valores monetários saem sem duas casas decimais (`$1000.0` em vez de `$1000.00`) — mesma causa do exercício anterior: falta um `String.format("%.2f", ...)` na hora de montar o texto.
+> 3. Um espaço duplo antes do traço em `"Alex Green (15/03/1985)  - alex@gmail.com"` — a concatenação tem `") "` seguido de `" - "`, dois literais com espaço cada, resultando em dois espaços juntos.
+>
+> 💡 **Por que `LocalDateTime.now()` em vez do `new Date()` sugerido no enunciado?** O enunciado (de 2018) pede `new Date()`, mas o código usa `LocalDateTime.now()` — a alternativa moderna do `java.time` (seção [10.4](#104-instanciando-data-hora-em-java)), que resolve exatamente o mesmo problema ("me dê o instante atual") de forma mais segura e com API mais rica. Um bom exemplo de como material de curso mais antigo às vezes sugere uma API que a própria linguagem já superou.
+</details>
