@@ -77,7 +77,9 @@
 12. [Enumerações e Composição](#12-enumerações-e-composição)
     - [12.1 Enumerações](#121-enumerações)
     - [12.2 Composição](#122-composição)
-13. [Exercícios Resolvidos](#13-exercícios-resolvidos)
+14. [Herança e Polimorfismo](#14-herança-e-polimorfismo)
+    - [14.1 Herança](#141-herança)
+15. [Exercícios Resolvidos](#15-exercícios-resolvidos)
 
 ---
 
@@ -3790,7 +3792,156 @@ Isso conecta direto com algo que o material já vinha fazendo sem nomear: em [12
 
 ---
 
-## 13. Exercícios Resolvidos
+## 14. Herança e Polimorfismo
+
+### 14.1 Herança
+
+**Herança** é um tipo de associação que permite que uma classe herde **todos** os dados e comportamentos de outra.
+
+> 💡 **Analogia — a diferença entre "é-um" e "tem-um":** até agora, todas as relações entre classes vistas (seção [12.2](#122-composição)) eram do tipo **"tem-um"** — um `Order` *tem-um* `Client`. Herança é uma relação completamente diferente: **"é-um"**. Uma conta empresarial **é uma** conta (só que com um pouco mais). É a diferença entre dizer "meu carro **tem um** motor" (composição) e "meu carro **é um** veículo" (herança) — no segundo caso, tudo que vale para "veículo" já vale automaticamente para "meu carro", sem precisar redizer nada.
+
+**Sintaxe:**
+
+```java
+class A extends B
+```
+
+Lendo em voz alta: *"`A` estende `B`"*, ou *"`A` é um `B`"*.
+
+#### Definições importantes
+
+| Termo | Significado |
+|---|---|
+| **Relação "é-um"** | O tipo de relação que a herança representa — a subclasse **é um tipo** da superclasse |
+| **Generalização / especialização** | A superclasse é a versão **geral**; a subclasse é uma versão **mais específica**, que herda o geral e adiciona (ou ajusta) detalhes próprios |
+| **Superclasse** (ou *classe base*) | A classe "de cima", mais geral — a que é estendida |
+| **Subclasse** (ou *classe derivada*) | A classe "de baixo", mais específica — a que usa `extends` |
+| **Herança / extensão** | O próprio mecanismo de uma classe herdar de outra |
+
+> ⚠️ **Um detalhe conceitual importante:** herança é uma associação entre **classes**, não entre **objetos**. Isso é diferente da composição (seção [12.2](#122-composição)), que é uma relação entre **objetos em tempo de execução** (um objeto `Order` guardando uma referência para um objeto `Client`). Herança já existe **em tempo de compilação**, no próprio desenho do tipo — não há "um objeto guardando outro" aqui, existe um tipo que é definido como uma extensão de outro tipo.
+
+**Vantagens:** o material do curso destaca duas, sendo a segunda um assunto ainda por vir:
+
+- **Reuso** — atributos e métodos escritos uma vez, na superclasse, ficam disponíveis em todas as subclasses, sem copiar código.
+- **Polimorfismo** — próximo tópico deste módulo.
+
+#### Exemplo — conta comum vs. conta empresarial
+
+**Cenário:** um banco tem uma conta comum (`Account`) e uma conta para empresas (`BusinessAccount`). A conta empresarial possui **todos** os membros da conta comum, mais um limite de empréstimo e uma operação de realizar empréstimo.
+
+```java
+package entities;
+
+public class Account {
+    private Integer number;
+    private String holder;
+    protected Double balance;
+
+    public Account(Integer number, String holder, Double balance) {
+        this.number = number;
+        this.holder = holder;
+        this.balance = balance;
+    }
+
+    public Integer getNumber() {
+        return number;
+    }
+
+    public String getHolder() {
+        return holder;
+    }
+
+    public Double getBalance() {
+        return balance;
+    }
+
+    public void withDraw(Double mount) {
+        balance -= mount;
+    }
+
+    public void deposit(Double mount) {
+        balance += mount;
+    }
+}
+```
+
+```java
+package entities;
+
+public class BusinessAccount extends Account {
+    private final Double loanLimit;
+
+    public BusinessAccount(Integer number, String holder, Double balance, Double loanLimit) {
+        super(number, holder, balance);
+        this.loanLimit = loanLimit;
+    }
+
+    public Double getLoanLimit() {
+        return loanLimit;
+    }
+
+    public void loan(Double mount) {
+        if (mount <= loanLimit) {
+            balance += mount - 10;
+        }
+    }
+}
+```
+
+Repare que `BusinessAccount` **não redeclara** `number`, `holder`, `balance`, `getNumber()`, `getHolder()`, `getBalance()`, `withDraw()` nem `deposit()` — tudo isso já vem de graça, herdado de `Account`, graças ao `extends`. A subclasse só precisa escrever o que é **novo** ou **diferente**: o atributo `loanLimit` e o método `loan(...)`.
+
+> 💬 **`super(number, holder, balance)`:** essa chamada, sempre a primeira linha do construtor da subclasse, invoca o **construtor da superclasse** — é assim que `number`, `holder` e `balance` (que pertencem a `Account`) são de fato inicializados, mesmo o construtor de `BusinessAccount` só recebendo esses valores para repassar adiante.
+
+**Testando na prática** (o `Program.java` do projeto ainda está vazio neste ponto da aula — o teste abaixo é ilustrativo, para confirmar o comportamento):
+
+```java
+Account acc = new Account(1001, "Alex", 1000.0);
+acc.deposit(200.0);
+acc.withDraw(50.0);
+System.out.println("Account balance: " + acc.getBalance());
+
+BusinessAccount bAcc = new BusinessAccount(2002, "Bob", 500.0, 400.0);
+bAcc.deposit(100.0);
+bAcc.loan(300.0);
+System.out.println("BusinessAccount balance after loan(300): " + bAcc.getBalance());
+bAcc.loan(500.0);
+System.out.println("BusinessAccount balance after loan(500, exceeds limit): " + bAcc.getBalance());
+```
+
+**Saída:**
+
+```
+Account balance: 1150.0
+BusinessAccount balance after loan(300): 890.0
+BusinessAccount balance after loan(500, exceeds limit): 890.0
+```
+
+`bAcc.deposit(100.0)` usa um método **herdado**, nunca escrito em `BusinessAccount` (500 → 600). `loan(300.0)` está dentro do limite (`300 <= 400`), então soma `300 - 10` (uma taxa fixa de empréstimo) ao saldo (600 → 890). `loan(500.0)` excede o limite (`500 > 400`), então o `if` nem executa — o saldo permanece em 890.
+
+#### O reencontro com modificadores de acesso: por que `private` não bastava
+
+Ao escrever `loan(...)`, que precisa alterar `balance`, apareceu um problema: `balance` tinha sido declarado `private` em `Account`. Pela tabela oficial de acessibilidade já vista em [7.16](#716-modificadores-de-acesso), `private` só é visível **dentro da própria classe** — nem uma subclasse enxerga um atributo `private` da superclasse. A correção foi trocar para `protected`:
+
+```java
+protected Double balance;
+```
+
+Olhando de novo a tabela de [7.16](#716-modificadores-de-acesso):
+
+| Modificador | Mesma classe | Mesmo pacote | Subclasse (pacote diferente) | Qualquer lugar |
+|---|:---:|:---:|:---:|:---:|
+| `private` | ✅ | ❌ | ❌ | ❌ |
+| *(padrão)* | ✅ | ✅ | ❌ | ❌ |
+| `protected` | ✅ | ✅ | ✅ | ❌ |
+| `public` | ✅ | ✅ | ✅ | ✅ |
+
+`protected` é exatamente o primeiro nível que inclui a coluna **"Subclasse (pacote diferente)"** — é a linha da tabela feita sob medida para este cenário: um atributo que a própria classe usa, que classes do mesmo pacote também podem usar, e que **subclasses quaisquer** (mesmo em outro pacote) também precisam enxergar para herdar o comportamento de verdade.
+
+> 🔍 **Um detalhe que vale notar:** neste exemplo específico, `Account` e `BusinessAccount` estão no **mesmo pacote** (`entities`) — então, tecnicamente, o modificador **padrão** (nenhum, sem palavra-chave) já teria resolvido o problema aqui, já que a coluna "Mesmo pacote" também é `✅` para o padrão. A vantagem de usar `protected` em vez de confiar no padrão é a **intenção**: `protected` deixa explícito "isto foi pensado para subclasses usarem", e continua funcionando mesmo se um dia `BusinessAccount` for movida para outro pacote — o padrão quebraria nesse cenário, `protected` não.
+
+---
+
+## 15. Exercícios Resolvidos
 
 ### Estrutura Sequencial
 
