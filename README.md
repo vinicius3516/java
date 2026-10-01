@@ -80,6 +80,7 @@
 14. [Herança e Polimorfismo](#14-herança-e-polimorfismo)
     - [14.1 Herança](#141-herança)
     - [14.2 Upcasting e downcasting](#142-upcasting-e-downcasting)
+    - [14.3 Sobreposição, a palavra `super`, e `@Override`](#143-sobreposição-a-palavra-super-e-override)
 15. [Exercícios Resolvidos](#15-exercícios-resolvidos)
 
 ---
@@ -3948,24 +3949,23 @@ Esta aula apresenta dois movimentos possíveis dentro de uma hierarquia de heran
 package entities;
 
 public class SavingsAccount extends Account {
-    private final Double interestRace;
+    private final Double interestRate;
 
-    public SavingsAccount(Integer number, String holder, Double balance, Double interestRace) {
+    public SavingsAccount(Integer number, String holder, Double balance, Double interestRate) {
         super(number, holder, balance);
-        this.interestRace = interestRace;
+        this.interestRate = interestRate;
     }
 
-    public Double getInterestRace() {
+    public Double getInterestRate() {
         return interestRace;
     }
 
     public void updateBalance() {
-        balance += balance * interestRace;
+        balance += balance * interestRate;
     }
 }
 ```
 
-> 🔍 Pequeno typo no código, sem afetar o funcionamento: o campo e os métodos usam `interestRace` — seria `interestRate` (taxa de juros). "Race" é corrida; "Rate" é taxa. Funciona normalmente, é só uma questão de nome.
 
 #### Upcasting — subir na hierarquia
 
@@ -4089,6 +4089,170 @@ Só `"Update!"` aparece — porque `acc2` é, de fato, um `SavingsAccount`. O pr
 É justo sentir que falta um problema real por trás disso — o material, até aqui, mostrou só a mecânica. Um cenário bem comum onde upcasting + downcasting aparecem juntos, na prática: imagine um banco com uma única lista, `List<Account> allAccounts`, vinda de um banco de dados — contendo uma mistura de `Account`, `BusinessAccount` e `SavingsAccount`, todos guardados ali graças ao upcasting (todos "são" `Account`). Uma rotina mensal que percorre essa lista processando cada conta de forma diferente dependendo do tipo real dela — aplicando juros só nas poupanças, oferecendo empréstimo só nas contas empresariais — precisaria, pra cada conta, perguntar "`instanceof SavingsAccount`? então `updateBalance()`. `instanceof BusinessAccount`? então ofereça o empréstimo." — exatamente o padrão `if/instanceof/cast` visto nesta aula, só que num laço, sobre uma coleção.
 
 > 💬 **A outra pista do material:** downcasting também é comum em "métodos que recebem parâmetros genéricos" — o exemplo citado é `equals`. Isso vai ficar mais concreto na próxima aula do módulo (sobreposição, `super`, `@Override`), quando sobrescrever `equals(Object obj)` exigir, dentro do método, descobrir se o `Object` recebido é realmente do tipo esperado antes de comparar.
+
+### 14.3 Sobreposição, a palavra `super`, e `@Override`
+
+**Sobreposição** (ou *sobrescrita*) é a implementação, **na subclasse**, de um método que já existe na superclasse — substituindo o comportamento herdado por um comportamento próprio daquele tipo mais específico.
+
+> 💬 **Por que sempre usar `@Override`:** essa anotação já tinha aparecido lá em [7.10](#710-a-superclasse-object-e-o-método-tostring), quando sobrescrevemos `toString()`. Agora, com herança de verdade em cena, o motivo fica ainda mais evidente: `@Override` facilita a leitura (quem lê já sabe, de cara, "isto está substituindo um comportamento herdado") e avisa o compilador — se o nome ou os parâmetros do método não baterem **exatamente** com algum método da superclasse, o compilador acusa erro na hora, em vez de deixar passar um método novo por engano (que nunca seria chamado no lugar do original).
+
+#### O problema motivador
+
+**Cenário:** a operação de saque cobra uma taxa de `5.0`. Porém, se a conta for do tipo poupança (`SavingsAccount`), essa taxa **não** deve ser cobrada. Como resolver isso sem duplicar toda a lógica de saque? Resposta: **sobrescrevendo** o método `withDraw` na subclasse.
+
+```java
+package entities;
+
+public class Account {
+    private Integer number;
+    private String holder;
+    protected Double balance;
+
+    public Account(Integer number, String holder, Double balance) {
+        this.number = number;
+        this.holder = holder;
+        this.balance = balance;
+    }
+
+    public Integer getNumber() {
+        return number;
+    }
+
+    public String getHolder() {
+        return holder;
+    }
+
+    public Double getBalance() {
+        return balance;
+    }
+
+    public void withDraw(Double mount) {
+        balance -= mount + 5.0;
+    }
+
+    public void deposit(Double mount) {
+        balance += mount;
+    }
+}
+```
+
+```java
+package entities;
+
+public class SavingsAccount extends Account {
+    private final Double interestRate;
+
+    public SavingsAccount(Integer number, String holder, Double balance, Double interestRate) {
+        super(number, holder, balance);
+        this.interestRate = interestRate;
+    }
+
+    public Double getInterestRate() {
+        return interestRate;
+    }
+
+    public void updateBalance() {
+        balance += balance * interestRate;
+    }
+
+    @Override
+    public void withDraw(Double mount) {
+        balance -= mount;
+    }
+}
+```
+
+`SavingsAccount` declara um `withDraw` com **exatamente** a mesma assinatura do `withDraw` de `Account` — isso é o que caracteriza a sobreposição. A partir de agora, chamar `withDraw(...)` num objeto `SavingsAccount` executa **esta** versão (sem a taxa de `5.0`), não a da superclasse.
+
+> 🔍 Repare que `interestRate` já está sem o typo (`interestRace`) visto na seção [14.2](#142-upcasting-e-downcasting) — foi corrigido entre uma aula e outra.
+
+#### A palavra-chave `super` chamando um método (não só um construtor)
+
+Já conhecíamos `super(...)` para chamar o **construtor** da superclasse (seção [14.1](#141-herança)). Mas `super` também serve para chamar a **implementação original de um método**, de dentro de uma versão sobrescrita dele — útil quando a subclasse não quer **substituir** o comportamento herdado, só **complementá-lo**.
+
+**Cenário:** em `BusinessAccount`, a regra de saque é realizar o saque normalmente (igual a `Account`, taxa de `5.0` incluída) e, além disso, descontar mais `2.0`.
+
+```java
+package entities;
+
+public class BusinessAccount extends Account {
+    private final Double loanLimit;
+
+    public BusinessAccount(Integer number, String holder, Double balance, Double loanLimit) {
+        super(number, holder, balance);
+        this.loanLimit = loanLimit;
+    }
+
+    public Double getLoanLimit() {
+        return loanLimit;
+    }
+
+    public void loan(Double amount) {
+        if (amount <= loanLimit) {
+            balance += amount - 10;
+        }
+    }
+
+    @Override
+    public void withDraw(Double amount) {
+        super.withDraw(amount);
+        balance -= 2.0;
+    }
+}
+```
+
+`super.withDraw(amount)` executa a versão **original** de `withDraw` — a de `Account`, com a taxa de `5.0` — e só depois disso a linha seguinte desconta os `2.0` extras. Sem `super`, seria preciso reescrever a lógica de `Account.withDraw` inteira dentro de `BusinessAccount`, duplicando código à toa.
+
+> 💡 **Analogia:** pense em `super.metodo(...)` como dizer "faça primeiro do jeito que a família sempre fez, e *depois* eu adiciono o meu toque pessoal" — em vez de reinventar o processo inteiro do zero.
+
+#### O programa completo
+
+```java
+package application;
+
+import entities.Account;
+import entities.BusinessAccount;
+import entities.SavingsAccount;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Locale.setDefault(Locale.US);
+
+        Account acc1 = new Account(1001, "Alex", 1000.0);
+        acc1.withDraw(200.0);
+        System.out.println(acc1.getBalance());
+
+        Account acc2 = new SavingsAccount(1002, "Maria", 1000.00, 0.01);
+        acc2.withDraw(200.00);
+        System.out.println(acc2.getBalance());
+
+        Account acc3 = new BusinessAccount(1003, "Bob", 1000.00, 500.00);
+        acc3.withDraw(200.00);
+        System.out.println(acc3.getBalance());
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+795.0
+800.0
+793.0
+```
+
+- `acc1` (`Account` puro): `1000 - (200 + 5.0) = 795.0` — a taxa normal de saque.
+- `acc2` (`SavingsAccount`): `1000 - 200 = 800.0` — sem taxa nenhuma, graças à sobreposição.
+- `acc3` (`BusinessAccount`): `super.withDraw(200)` desconta `200 + 5.0` (`→ 795.0`), e depois mais `2.0` (`→ 793.0`).
+
+> 🎯 **O detalhe mais importante de toda essa demo:** as três variáveis (`acc1`, `acc2`, `acc3`) são **todas declaradas como `Account`** — nenhuma delas é declarada como `SavingsAccount` ou `BusinessAccount` na assinatura. Mesmo assim, a mesma chamada `.withDraw(...)`, escrita de forma idêntica nas três linhas, executa um comportamento **diferente** em cada uma, dependendo do tipo **real** do objeto por trás da referência. Esse comportamento — o mesmo código chamando implementações diferentes, decidido em tempo de execução — é a essência do **polimorfismo**, o próximo tópico do módulo (já adiantado em [14.2](#142-upcasting-e-downcasting)), mesmo sem esse nome ainda ter aparecido formalmente nesta aula.
 
 ---
 
