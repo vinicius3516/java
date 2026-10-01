@@ -79,6 +79,7 @@
     - [12.2 Composição](#122-composição)
 14. [Herança e Polimorfismo](#14-herança-e-polimorfismo)
     - [14.1 Herança](#141-herança)
+    - [14.2 Upcasting e downcasting](#142-upcasting-e-downcasting)
 15. [Exercícios Resolvidos](#15-exercícios-resolvidos)
 
 ---
@@ -3938,6 +3939,156 @@ Olhando de novo a tabela de [7.16](#716-modificadores-de-acesso):
 `protected` é exatamente o primeiro nível que inclui a coluna **"Subclasse (pacote diferente)"** — é a linha da tabela feita sob medida para este cenário: um atributo que a própria classe usa, que classes do mesmo pacote também podem usar, e que **subclasses quaisquer** (mesmo em outro pacote) também precisam enxergar para herdar o comportamento de verdade.
 
 > 🔍 **Um detalhe que vale notar:** neste exemplo específico, `Account` e `BusinessAccount` estão no **mesmo pacote** (`entities`) — então, tecnicamente, o modificador **padrão** (nenhum, sem palavra-chave) já teria resolvido o problema aqui, já que a coluna "Mesmo pacote" também é `✅` para o padrão. A vantagem de usar `protected` em vez de confiar no padrão é a **intenção**: `protected` deixa explícito "isto foi pensado para subclasses usarem", e continua funcionando mesmo se um dia `BusinessAccount` for movida para outro pacote — o padrão quebraria nesse cenário, `protected` não.
+
+### 14.2 Upcasting e downcasting
+
+Esta aula apresenta dois movimentos possíveis dentro de uma hierarquia de herança — "subir" para a superclasse (*upcasting*) e "descer" de volta para a subclasse (*downcasting*). O cenário ganhou mais uma subclasse de `Account`, para ter duas "especializações" diferentes para comparar:
+
+```java
+package entities;
+
+public class SavingsAccount extends Account {
+    private final Double interestRace;
+
+    public SavingsAccount(Integer number, String holder, Double balance, Double interestRace) {
+        super(number, holder, balance);
+        this.interestRace = interestRace;
+    }
+
+    public Double getInterestRace() {
+        return interestRace;
+    }
+
+    public void updateBalance() {
+        balance += balance * interestRace;
+    }
+}
+```
+
+> 🔍 Pequeno typo no código, sem afetar o funcionamento: o campo e os métodos usam `interestRace` — seria `interestRate` (taxa de juros). "Race" é corrida; "Rate" é taxa. Funciona normalmente, é só uma questão de nome.
+
+#### Upcasting — subir na hierarquia
+
+**Upcasting** é o *casting* de uma subclasse para sua superclasse — guardar um objeto mais específico numa variável de um tipo mais genérico:
+
+```java
+Account acc1 = bacc;                                          // bacc é BusinessAccount
+Account acc2 = new BusinessAccount(1003, "Bob", 0.0, 200.0);
+Account acc3 = new SavingsAccount(1004, "Anna", 0.0, 0.01);
+```
+
+Isso é sempre **seguro** e acontece **automaticamente**, sem precisar de nenhum cast explícito — porque, pela relação "é-um" vista em [14.1](#141-herança), todo `BusinessAccount` **já é** um `Account`. Subir na hierarquia nunca perde nada que a superclasse garanta; só deixa temporariamente "fora de vista" as habilidades extras da subclasse (`loan(...)`, `updateBalance()`...).
+
+> 💡 **Analogia:** é como guardar uma maçã numa caixa etiquetada "Fruta". Toda maçã já é uma fruta — não tem erro nenhum, nem surpresa, em tratá-la como fruta genérica. Só que, enquanto ela estiver "vista" apenas como fruta, não dá pra pedir algo específico de maçã (tipo "contar as sementes") sem antes confirmar que, de fato, aquela fruta específica é uma maçã.
+
+> 💬 **Uso comum (segundo o material):** é a base do **polimorfismo** — próximo tópico do módulo. Conseguir tratar `BusinessAccount` e `SavingsAccount` como "apenas `Account`" é o que permite, por exemplo, guardar os dois tipos numa mesma lista (`List<Account>`), mesmo sendo objetos de classes diferentes.
+
+#### Downcasting — descer de volta na hierarquia
+
+**Downcasting** é o caminho inverso: pegar uma referência do tipo mais genérico (superclasse) e reafirmar que aquele objeto específico é, na verdade, de um tipo mais específico (subclasse) — para então acessar os membros exclusivos dela.
+
+Ao contrário do upcasting, isso **não é automático**. Tentar sem um cast explícito nem compila:
+
+```java
+BusinessAccount acc4 = acc2; // erro de compilação
+```
+
+```
+error: incompatible types: Account cannot be converted to BusinessAccount
+```
+
+O porquê disso, bem explicado (achei a explicação que ficou registrada no próprio código muito boa, vale reproduzir): o compilador **não tem como garantir**, só olhando o tipo declarado da variável (`Account`), que o objeto que `acc2` aponta é *realmente* um `BusinessAccount` — isso só vai ser conhecido **em tempo de execução**. Por isso, é preciso um cast explícito, assumindo a responsabilidade por essa afirmação:
+
+```java
+BusinessAccount acc4 = (BusinessAccount) acc2; // agora compila
+```
+
+**Mas aqui mora o perigo real do downcasting** — e é exatamente o tipo de problema concreto que faltava pra esse assunto "clicar": o cast explícito faz o código **compilar**, mas não garante que ele vai **funcionar**. Testei forçando esse cast quando `acc2` era, na verdade, um `SavingsAccount`:
+
+```java
+Account acc2 = new SavingsAccount(1003, "Anna", 0.0, 0.01);
+BusinessAccount acc4 = (BusinessAccount) acc2; // compila...
+```
+
+```
+Exception in thread "main" java.lang.ClassCastException: class entities.SavingsAccount cannot be cast to class entities.BusinessAccount
+```
+
+**Erro em tempo de execução, de verdade** — o programa compila perfeitamente, mas quebra na hora de rodar. O cast é uma **promessa** que o programador faz ao compilador ("confia em mim, isso aqui é um `BusinessAccount`"); se a promessa for falsa, o preço é pago depois, em produção, na forma de uma exceção.
+
+#### `instanceof` — verificando antes de arriscar o downcasting
+
+É exatamente para evitar esse `ClassCastException` que existe o operador `instanceof`: ele pergunta, em tempo de execução, *"este objeto é, de fato, uma instância deste tipo?"*, devolvendo `true`/`false` — permitindo fazer o downcasting só quando for seguro:
+
+```java
+if (acc2 instanceof BusinessAccount) {
+    BusinessAccount acc4 = (BusinessAccount) acc2;
+    acc4.loan(200.0);
+    System.out.println("Loan!");
+}
+if (acc2 instanceof SavingsAccount) {
+    SavingsAccount acc4 = (SavingsAccount) acc2;
+    acc4.updateBalance();
+    System.out.println("Update!");
+}
+```
+
+**O programa completo:**
+
+```java
+package application;
+
+import entities.Account;
+import entities.BusinessAccount;
+import entities.SavingsAccount;
+
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Locale.setDefault(Locale.US);
+
+        Account acc = new Account(1001, "Alex", 0.0);
+
+        // Upcasting
+
+        Account acc1 = new BusinessAccount(1002, "Maria", 0.0, 500.00);
+        Account acc2 = new SavingsAccount(1003, "Anna", 0.0, 0.01);
+
+        // Downcasting, com verificação usando 'instanceof'
+
+        if (acc2 instanceof BusinessAccount) {
+            BusinessAccount acc4 = (BusinessAccount) acc2;
+            acc4.loan(200.0);
+            System.out.println("Loan!");
+        }
+        if (acc2 instanceof SavingsAccount) {
+            SavingsAccount acc4 = (SavingsAccount) acc2;
+            acc4.updateBalance();
+            System.out.println("Update!");
+        }
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Update!
+```
+
+Só `"Update!"` aparece — porque `acc2` é, de fato, um `SavingsAccount`. O primeiro `if` (`acc2 instanceof BusinessAccount`) dá `false`, então aquele bloco nem executa; o segundo `if` dá `true`, libera o downcasting pra `SavingsAccount` e chama `updateBalance()` com segurança.
+
+#### Onde isso aparece "pra valer" (a aplicação prática que ainda faltava)
+
+É justo sentir que falta um problema real por trás disso — o material, até aqui, mostrou só a mecânica. Um cenário bem comum onde upcasting + downcasting aparecem juntos, na prática: imagine um banco com uma única lista, `List<Account> allAccounts`, vinda de um banco de dados — contendo uma mistura de `Account`, `BusinessAccount` e `SavingsAccount`, todos guardados ali graças ao upcasting (todos "são" `Account`). Uma rotina mensal que percorre essa lista processando cada conta de forma diferente dependendo do tipo real dela — aplicando juros só nas poupanças, oferecendo empréstimo só nas contas empresariais — precisaria, pra cada conta, perguntar "`instanceof SavingsAccount`? então `updateBalance()`. `instanceof BusinessAccount`? então ofereça o empréstimo." — exatamente o padrão `if/instanceof/cast` visto nesta aula, só que num laço, sobre uma coleção.
+
+> 💬 **A outra pista do material:** downcasting também é comum em "métodos que recebem parâmetros genéricos" — o exemplo citado é `equals`. Isso vai ficar mais concreto na próxima aula do módulo (sobreposição, `super`, `@Override`), quando sobrescrever `equals(Object obj)` exigir, dentro do método, descobrir se o `Object` recebido é realmente do tipo esperado antes de comparar.
 
 ---
 
