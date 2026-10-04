@@ -81,6 +81,7 @@
     - [14.1 Herança](#141-herança)
     - [14.2 Upcasting e downcasting](#142-upcasting-e-downcasting)
     - [14.3 Sobreposição, a palavra `super`, e `@Override`](#143-sobreposição-a-palavra-super-e-override)
+    - [14.4 Classes e métodos `final`](#144-classes-e-métodos-final)
 15. [Exercícios Resolvidos](#15-exercícios-resolvidos)
 
 ---
@@ -4253,6 +4254,78 @@ public class Program {
 - `acc3` (`BusinessAccount`): `super.withDraw(200)` desconta `200 + 5.0` (`→ 795.0`), e depois mais `2.0` (`→ 793.0`).
 
 > 🎯 **O detalhe mais importante de toda essa demo:** as três variáveis (`acc1`, `acc2`, `acc3`) são **todas declaradas como `Account`** — nenhuma delas é declarada como `SavingsAccount` ou `BusinessAccount` na assinatura. Mesmo assim, a mesma chamada `.withDraw(...)`, escrita de forma idêntica nas três linhas, executa um comportamento **diferente** em cada uma, dependendo do tipo **real** do objeto por trás da referência. Esse comportamento — o mesmo código chamando implementações diferentes, decidido em tempo de execução — é a essência do **polimorfismo**, o próximo tópico do módulo (já adiantado em [14.2](#142-upcasting-e-downcasting)), mesmo sem esse nome ainda ter aparecido formalmente nesta aula.
+
+### 14.4 Classes e métodos `final`
+
+Até aqui, a herança foi vista como algo que sempre pode ser estendido: qualquer classe pode ter subclasses, e qualquer método pode ser sobrescrito. A palavra-chave `final` permite **bloquear** essas duas possibilidades.
+
+- **Em uma classe**, `final` impede que ela seja herdada (ninguém pode fazer `extends` nela).
+- **Em um método**, `final` impede que ele seja sobreposto (ninguém pode reescrevê-lo numa subclasse, como fizemos em [14.3](#143-sobreposição-a-palavra-super-e-override)).
+
+#### Exemplo — classe `final`
+
+Suponha que você queira impedir que existam subclasses de `SavingsAccount`:
+
+```java
+public final class SavingsAccount extends Account {
+    // ...
+}
+```
+
+Testei o que acontece ao tentar estender uma classe marcada assim:
+
+```java
+public class Poupanca2 extends SavingsAccount { ... }
+```
+
+```
+error: cannot inherit from final SavingsAccount
+```
+
+O compilador impede a herança **antes** de o programa rodar, sem precisar de nenhum teste extra.
+
+#### Exemplo — método `final`
+
+Suponha agora que a classe continue podendo ser herdada, mas você **não** queira que o método `withDraw` de `SavingsAccount` seja sobreposto:
+
+```java
+public class SavingsAccount extends Account {
+    // ...
+
+    @Override
+    public final void withDraw(Double amount) {
+        balance -= amount;
+    }
+}
+```
+
+Tentando sobrescrevê-lo numa subclasse:
+
+```java
+public class Sub2 extends SavingsAccount {
+    @Override
+    public void withDraw(Double mount) { ... }
+}
+```
+
+```
+error: withDraw(Double) in Sub2 cannot override withDraw(Double) in SavingsAccount
+  overridden method is final
+```
+
+> 💡 Repare que, **mesmo com `@Override` na versão `final`**, a anotação e a palavra `final` têm papéis diferentes: `@Override` diz "isto substitui algo da superclasse" (verificado pelo compilador, como em [14.3](#143-sobreposição-a-palavra-super-e-override)); `final` diz "isto **não pode** ser substituído por ninguém". São duas coisas independentes que podem aparecer juntas.
+
+#### Para que serve
+
+O material do curso lista três motivos para usar `final`:
+
+1. **Segurança** — dependendo das regras de negócio, às vezes é desejável garantir que uma classe **não** seja herdada, ou que um método **não** seja sobreposto. Por exemplo: se a regra de uma conta poupança exige que o saque nunca cobre taxa, deixar `withDraw` `final` garante que nenhuma subclasse futura quebre essa regra por engano.
+2. **Consistência** — o material recomenda, de forma geral, acrescentar `final` em métodos sobrescritos, pois **sobreposições em cadeia** (uma subclasse sobrescrevendo, outra sobrescrevendo de novo, e assim por diante) podem virar uma porta de entrada para inconsistências difíceis de rastrear.
+3. **Desempenho** — segundo o material, classes `final` podem ser analisadas de forma mais rápida em tempo de execução, já que o compilador/JVM sabe que o tipo nunca será estendido.
+
+> 💬 **Exemplo clássico do próprio Java:** a classe `String` é `final`. Ninguém pode criar uma "subclasse de texto" com comportamento alterado — e isso protege o próprio funcionamento da linguagem, já que `String` aparece em praticamente todo programa.
+
+> ⚠️ **Observação:** as aulas ainda não aplicaram `final` ao código do projeto nesta etapa (`SavingsAccount` continua sem `final`) — os exemplos acima são os do material, testados aqui só para confirmar as mensagens de erro do compilador.
 
 ---
 
