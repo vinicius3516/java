@@ -6136,3 +6136,162 @@ Total price: $1080.0
 >
 > 💡 **Por que `LocalDateTime.now()` em vez do `new Date()` sugerido no enunciado?** O enunciado (de 2018) pede `new Date()`, mas o código usa `LocalDateTime.now()` — a alternativa moderna do `java.time` (seção [10.4](#104-instanciando-data-hora-em-java)), que resolve exatamente o mesmo problema ("me dê o instante atual") de forma mais segura e com API mais rica. Um bom exemplo de como material de curso mais antigo às vezes sugere uma API que a própria linguagem já superou.
 </details>
+
+### Herança e Polimorfismo
+
+Exercícios práticos do módulo de **Herança e Polimorfismo** (seção [14](#14-herança-e-polimorfismo)).
+
+<details>
+<summary><strong>Exercício 1 — Pagamento de funcionários próprios e terceirizados</strong></summary>
+
+**Enunciado:** uma empresa possui funcionários próprios e terceirizados. Para cada funcionário, deseja-se registrar nome, horas trabalhadas e valor por hora. Funcionários terceirizados possuem ainda uma despesa adicional. O pagamento corresponde ao valor da hora multiplicado pelas horas trabalhadas, sendo que os terceirizados ainda recebem um bônus correspondente a 110% de sua despesa adicional. Ler os dados de `N` funcionários e armazená-los numa lista. Depois, mostrar nome e pagamento de cada um, na mesma ordem em que foram digitados.
+
+Este exercício usa **herança** (`OutsourcedEmployee` estende `Employee`, seção [14.1](#141-herança)), **sobreposição** do método `payment()` (seção [14.3](#143-sobreposição-a-palavra-super-e-override)), **`super`** para reaproveitar o cálculo base, e **`final`** no método sobreposto (seção [14.4](#144-classes-e-métodos-final)).
+
+```java
+package entities;
+
+public class Employee {
+    private String name;
+    private Integer hours;
+    private Double valuePerHours;
+
+    public Employee(String name, Integer hours, Double valuePerHours) {
+        this.name = name;
+        this.hours = hours;
+        this.valuePerHours = valuePerHours;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Integer getHours() {
+        return hours;
+    }
+
+    public Double getValuePerHours() {
+        return valuePerHours;
+    }
+
+    @Override
+    public String toString() {
+        return name + " - " + "$ " + String.format("%.2f", payment());
+    }
+
+    public Double payment() {
+        return valuePerHours * hours;
+    }
+}
+```
+
+```java
+package entities;
+
+public class OutsourcedEmployee extends Employee {
+    private final Double additionalCharge;
+
+    public OutsourcedEmployee(String name, Integer hours, Double valuePerHours, Double additionalCharge) {
+        super(name, hours, valuePerHours);
+        this.additionalCharge = additionalCharge;
+    }
+
+    public Double getAdditionalCharge() {
+        return additionalCharge;
+    }
+
+    @Override
+    public final Double payment() {
+        double totalBonus = (additionalCharge * 110) / 100;
+        return super.payment() + totalBonus;
+    }
+}
+```
+
+```java
+package application;
+
+import entities.Employee;
+import entities.OutsourcedEmployee;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Locale.setDefault(Locale.US);
+
+        List<Employee> list = new ArrayList<>();
+
+        System.out.print("Enter the number of employees: ");
+        int n = sc.nextInt();
+
+        for (int i = 0; i < n; i++) {
+            System.out.println("Employee #" + (i + 1) + " data");
+            sc.nextLine();
+            System.out.print("Outsourced (y/n)? ");
+            String outsourced = sc.nextLine();
+            System.out.print("Name: ");
+            String name = sc.nextLine();
+            System.out.print("Hours: ");
+            int hours = sc.nextInt();
+            System.out.print("Value Per Hours: ");
+            double valuePerHours = sc.nextDouble();
+            if (outsourced.equals("y")) {
+                System.out.print("Additional charge: ");
+                double addCharge = sc.nextDouble();
+                list.add(new OutsourcedEmployee(name, hours, valuePerHours, addCharge));
+            } else {
+                list.add(new Employee(name, hours, valuePerHours));
+            }
+        }
+
+        System.out.println();
+
+        System.out.println("PAYMENTS:");
+        for (Employee emp : list) {
+            System.out.println(emp);
+        }
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Enter the number of employees: 3
+Employee #1 data
+Outsourced (y/n)? n
+Name: Alex
+Hours: 50
+Value Per Hours: 20.00
+Employee #2 data
+Outsourced (y/n)? y
+Name: Bob
+Hours: 100
+Value Per Hours: 15.00
+Additional charge: 200.00
+Employee #3 data
+Outsourced (y/n)? n
+Name: Maria
+Hours: 60
+Value Per Hours: 20.00
+
+PAYMENTS:
+Alex - $ 1000.00
+Bob - $ 1720.00
+Maria - $ 1200.00
+```
+
+> 💡 **Polimorfismo na prática:** a lista é do tipo `List<Employee>`, mas cada elemento pode ser um `Employee` ou um `OutsourcedEmployee`. O laço final chama `System.out.println(emp)` sem nenhum `if`: o `toString()` herdado chama `payment()`, e a versão executada é a da subclasse quando o objeto é terceirizado (`1500 + 220 = 1720`), e a da superclasse quando não é (`50 × 20 = 1000`). Quem decide qual versão roda é o objeto real na lista, em tempo de execução (seção [14.5](#145-introdução-a-polimorfismo)).
+>
+> ⚠️ **Dois pontos de atenção no código:**
+> 1. O nome da classe está escrito `OustsourcedEmployee` no arquivo original (falta um `t` antes do `s`, o correto é `Outsourced`). Ao final, renomeei para `OutsourcedEmployee` na documentação; no projeto, vale renomear o arquivo e a classe para manter o padrão.
+> 2. `payment()` em `OutsourcedEmployee` está `final`, e isso faz sentido aqui: o cálculo do bônus não deve ser alterado por subclasses futuras, pelo mesmo motivo discutido em [14.4](#144-classes-e-métodos-final).
+</details>
