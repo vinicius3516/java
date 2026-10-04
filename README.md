@@ -4326,6 +4326,55 @@ O material do curso lista três motivos para usar `final`:
 
 > 💬 **Exemplo clássico do próprio Java:** a classe `String` é `final`. Ninguém pode criar uma "subclasse de texto" com comportamento alterado — e isso protege o próprio funcionamento da linguagem, já que `String` aparece em praticamente todo programa.
 
+#### `final` em atributos de instância
+
+Além de classes e métodos, `final` também pode marcar **atributos**, como em `private final Double additionalCharge;` (usado no exercício de funcionários terceirizados da seção 15). Nesse caso, o `final` restringe a **referência** guardada no campo, e não o objeto que ela aponta:
+
+- **Atribuição única:** o campo precisa receber valor exatamente uma vez, na declaração ou em **todo** construtor da classe.
+- **Não pode ser reatribuído depois:** nenhum método pode fazer `this.campo = ...` depois disso.
+
+Testei os três casos típicos:
+
+```java
+public class A {
+    private final Double charge;
+    public A(Double charge) { this.charge = charge; }
+    public void change() { this.charge = 5.0; }   // erro
+}
+```
+
+```
+error: cannot assign a value to final variable charge
+```
+
+```java
+public class B {
+    private final Double charge;
+    public B() { }   // construtor não atribui nada
+}
+```
+
+```
+error: variable charge might not have been initialized
+```
+
+```java
+public class C {
+    private final Double charge;
+    public C(Double c) { this.charge = c; this.charge = 2.0; }   // atribui duas vezes
+}
+```
+
+```
+error: variable charge might already have been assigned
+```
+
+No caso de `OutsourcedEmployee`, `additionalCharge` só é atribuído no construtor, e por isso não existe `setAdditionalCharge`: o valor fica fixo para aquele objeto.
+
+> ⚠️ **O `final` trava a referência, não o objeto apontado.** Para tipos mutáveis isso faz diferença: `private final List<String> log = new ArrayList<>();` impede `log = outraLista`, mas `log.add("x")` continua funcionando. Com `Double`, que é imutável, o efeito prático é que o valor não muda depois de criado.
+
+> 💡 Não confundir com o `static final` de [7.11](#711-membros-estáticos): lá, `PI` era uma constante única da classe, compartilhada por todos os objetos. Aqui, cada objeto tem seu próprio `additionalCharge`, fixado no construtor.
+
 ### 14.5 Introdução a polimorfismo
 
 **Polimorfismo** é um dos três pilares da programação orientada a objetos (ao lado de **encapsulamento**, visto em [7.15](#715-encapsulamento), e **herança**, visto em [14.1](#141-herança)). Segundo o material, é o recurso que permite que **variáveis de um mesmo tipo genérico possam apontar para objetos de tipos específicos diferentes**, e assim ter **comportamentos diferentes** conforme o tipo específico de cada objeto.
