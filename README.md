@@ -82,6 +82,7 @@
     - [14.2 Upcasting e downcasting](#142-upcasting-e-downcasting)
     - [14.3 Sobreposição, a palavra `super`, e `@Override`](#143-sobreposição-a-palavra-super-e-override)
     - [14.4 Classes e métodos `final`](#144-classes-e-métodos-final)
+    - [14.5 Introdução a polimorfismo](#145-introdução-a-polimorfismo)
 15. [Exercícios Resolvidos](#15-exercícios-resolvidos)
 
 ---
@@ -4325,7 +4326,67 @@ O material do curso lista três motivos para usar `final`:
 
 > 💬 **Exemplo clássico do próprio Java:** a classe `String` é `final`. Ninguém pode criar uma "subclasse de texto" com comportamento alterado — e isso protege o próprio funcionamento da linguagem, já que `String` aparece em praticamente todo programa.
 
-> ⚠️ **Observação:** as aulas ainda não aplicaram `final` ao código do projeto nesta etapa (`SavingsAccount` continua sem `final`) — os exemplos acima são os do material, testados aqui só para confirmar as mensagens de erro do compilador.
+### 14.5 Introdução a polimorfismo
+
+**Polimorfismo** é um dos três pilares da programação orientada a objetos (ao lado de **encapsulamento**, visto em [7.15](#715-encapsulamento), e **herança**, visto em [14.1](#141-herança)). Segundo o material, é o recurso que permite que **variáveis de um mesmo tipo genérico possam apontar para objetos de tipos específicos diferentes**, e assim ter **comportamentos diferentes** conforme o tipo específico de cada objeto.
+
+> 💡 **Em uma frase:** o mesmo nome de método, chamado pela mesma variável de tipo genérico, pode fazer coisas diferentes — porque quem decide *qual* versão roda é o **objeto real** por trás da referência, não o tipo declarado da variável.
+
+#### O exemplo do material
+
+```java
+Account x = new Account(1020, "Alex", 1000.0);
+Account y = new SavingsAccount(1023, "Maria", 1000.0, 0.01);
+
+x.withdraw(50.0);
+y.withdraw(50.0);
+```
+
+As duas variáveis são declaradas como `Account`, mas:
+
+- `x` aponta para um objeto `Account` de verdade, cujo `withdraw` cobra a taxa de `5.0` → saldo `1000 - 50 - 5 = 945.0`.
+- `y` aponta para um objeto `SavingsAccount`, cujo `withdraw` (sobrescrito, seção [14.3](#143-sobreposição-a-palavra-super-e-override)) **não** cobra taxa → saldo `1000 - 50 = 950.0`.
+
+Mesma linha de código escrita para os dois, comportamentos diferentes.
+
+#### O que acontece na memória
+
+```
+Stack                                   Heap
+┌──────────────┐                        ┌──────────────────────────┐
+│ x ●──────────┼───────────────────────▶│ Account                  │
+├──────────────┤                        │ 1020 | Alex | 1000.0      │
+│ y ●──────────┼───────────────────────▶┌──────────────────────────┐
+└──────────────┘                        │ SavingsAccount            │
+                                        │ 1023 | Maria | 1000.0 | 0.01 │
+                                        └──────────────────────────┘
+```
+
+As duas referências são do tipo `Account` (o tipo genérico declarado), mas cada uma aponta para um objeto de um tipo específico diferente no Heap. É exatamente o **upcasting** de [14.2](#142-upcasting-e-downcasting) acontecendo: o objeto `SavingsAccount` foi "visto" como um `Account` ao ser guardado em `y`.
+
+#### Quando a decisão acontece: tempo de execução
+
+> ⚠️ **O ponto central do polimorfismo:** a associação entre o tipo específico do objeto e a chamada do método é feita **em tempo de execução**. O compilador **não sabe** para qual tipo específico a chamada `.withdraw(...)` vai — ele só sabe que `x` e `y` são do tipo `Account`, e que `Account` tem um método `withdraw`. Quem decide qual versão roda, na hora, é o objeto real apontado por cada referência.
+
+#### Aplicado ao projeto
+
+Esse exato comportamento já está acontecendo no `Program.java` do projeto — as três variáveis `acc1`, `acc2` e `acc3` são todas declaradas como `Account`, mas apontam para objetos `Account`, `SavingsAccount` e `BusinessAccount`:
+
+```java
+Account acc1 = new Account(1001, "Alex", 1000.0);
+acc1.withDraw(200.0);
+System.out.println(acc1.getBalance());   // 795.0 — versão de Account (com taxa de 5.0)
+
+Account acc2 = new SavingsAccount(1002, "Maria", 1000.00, 0.01);
+acc2.withDraw(200.00);
+System.out.println(acc2.getBalance());   // 800.0 — versão de SavingsAccount (sem taxa)
+
+Account acc3 = new BusinessAccount(1003, "Bob", 1000.00, 500.00);
+acc3.withDraw(200.00);
+System.out.println(acc3.getBalance());   // 793.0 — versão de BusinessAccount (super + taxa de 2.0)
+```
+
+Testado aqui: a saída é exatamente `795.0`, `800.0` e `793.0`, como visto em [14.3](#143-sobreposição-a-palavra-super-e-override) — o polimorfismo já estava em ação, mesmo antes de ter sido nomeado como tal.
 
 ---
 
