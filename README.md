@@ -6344,3 +6344,185 @@ Maria - $ 1200.00
 > 1. O nome da classe está escrito `OustsourcedEmployee` no arquivo original (falta um `t` antes do `s`, o correto é `Outsourced`). Ao final, renomeei para `OutsourcedEmployee` na documentação; no projeto, vale renomear o arquivo e a classe para manter o padrão.
 > 2. `payment()` em `OutsourcedEmployee` está `final`, e isso faz sentido aqui: o cálculo do bônus não deve ser alterado por subclasses futuras, pelo mesmo motivo discutido em [14.4](#144-classes-e-métodos-final).
 </details>
+
+<details>
+<summary><strong>Exercício 2 — Etiquetas de preço (produtos comuns, importados e usados)</strong></summary>
+
+**Enunciado:** ler os dados de `N` produtos (`N` fornecido pelo usuário). Todo produto possui nome e preço. Produtos importados possuem uma taxa de alfândega, que deve ser acrescentada ao preço final. Produtos usados possuem data de fabricação. Ao final, mostrar a etiqueta de preço de cada produto, na mesma ordem em que foram digitados, com os dados específicos de cada tipo.
+
+Este exercício usa **herança** (`ImportedProduct` e `UsedProduct` estendem `Product`), **sobreposição** de `priceTag()` com `super.priceTag()` (seção [14.3](#143-sobreposição-a-palavra-super-e-override)) e **polimorfismo** no laço final, sem nenhum `instanceof` (seção [14.5](#145-introdução-a-polimorfismo)).
+
+```java
+package entities;
+
+public class Product {
+    private final String name;
+    private final Double price;
+
+    public Product(String name, Double price) {
+        this.name = name;
+        this.price = price;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Double getPrice() {
+        return price;
+    }
+
+    public String priceTag() {
+        return " $ " + String.format("%.2f", price);
+    }
+}
+```
+
+```java
+package entities;
+
+public class ImportedProduct extends Product {
+    private final Double customsFee;
+
+    public ImportedProduct(String name, Double price, Double customsFee) {
+        super(name, price);
+        this.customsFee = customsFee;
+    }
+
+    public Double getCustomsFee() {
+        return customsFee;
+    }
+
+    @Override
+    public String priceTag() {
+        return " $ " + String.format("%.2f", totalPrice()) + " (Customs fee: $ " + String.format("%.2f", customsFee) + ")";
+    }
+
+    public Double totalPrice() {
+        return super.getPrice() + customsFee;
+    }
+}
+```
+
+```java
+package entities;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+public class UsedProduct extends Product {
+    private final LocalDate manufactureDate;
+
+    public UsedProduct(String name, Double price, LocalDate manufactureDate) {
+        super(name, price);
+        this.manufactureDate = manufactureDate;
+    }
+
+    public LocalDate getManufactureDate() {
+        return manufactureDate;
+    }
+
+    @Override
+    public String priceTag() {
+        return " (used) " + super.priceTag() + " (Manufacture date: " + manufactureDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ")";
+    }
+}
+```
+
+```java
+package application;
+
+import entities.ImportedProduct;
+import entities.Product;
+import entities.UsedProduct;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        List<Product> products = new ArrayList<>();
+
+        System.out.print("Enter the number of products: ");
+        int n = sc.nextInt();
+        sc.nextLine();
+
+        for (int i = 0; i < n; i++) {
+            System.out.println("Product #" + (i + 1) + " data:");
+            System.out.print("Common, used or imported (c/u/i)? ");
+            char type = sc.next().charAt(0);
+            sc.nextLine();
+
+            System.out.print("Name: ");
+            String name = sc.nextLine();
+            System.out.print("Price: ");
+            double price = sc.nextDouble();
+            sc.nextLine();
+
+            if (type == 'i') {
+                System.out.print("Customs fee: ");
+                double customsFeeValue = sc.nextDouble();
+                sc.nextLine();
+
+                products.add(new ImportedProduct(name, price, customsFeeValue));
+            } else if (type == 'u') {
+                System.out.print("Manufacture date (DD/MM/YYYY): ");
+                String inputDate = sc.nextLine();
+                LocalDate manufactureDate = LocalDate.parse(inputDate, fmt);
+
+                products.add(new UsedProduct(name, price, manufactureDate));
+            } else {
+                products.add(new Product(name, price));
+            }
+        }
+
+        System.out.println();
+        System.out.println("PRICE TAGS:");
+        for (Product prd : products) {
+            System.out.println(prd.getName() + prd.priceTag());
+        }
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Enter the number of products: 3
+Product #1 data:
+Common, used or imported (c/u/i)? i
+Name: Tablet
+Price: 260.00
+Customs fee: 20.00
+Product #2 data:
+Common, used or imported (c/u/i)? c
+Name: Notebook
+Price: 1100.00
+Product #3 data:
+Common, used or imported (c/u/i)? u
+Name: Iphone
+Price: 400.00
+Manufacture date (DD/MM/YYYY): 15/03/2017
+
+PRICE TAGS:
+Tablet $ 280.00 (Customs fee: $ 20.00)
+Notebook $ 1100.00
+Iphone (used)  $ 400.00 (Manufacture date: 15/03/2017)
+```
+
+> 💡 **Polimorfismo sem `instanceof`:** o laço final chama `prd.priceTag()` sobre uma lista de `Product`. Cada objeto usa a sua própria versão do método: o importado soma a taxa (`260 + 20 = 280`), o usado acrescenta a data de fabricação, e o comum usa a versão da superclasse. Não há nenhum `if` decidindo o tipo no laço, a escolha é feita em tempo de execução pelo objeto real.
+>
+> ⚠️ **Um detalhe de formatação:** na saída, o Iphone aparece com dois espaços (`(used)  $ 400.00`). Isso acontece porque `UsedProduct.priceTag()` começa com `" (used) "` (com espaço no fim) e `Product.priceTag()` também começa com espaço. A correção seria tirar o espaço final de `" (used) "`.
+</details>
