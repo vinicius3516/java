@@ -84,6 +84,7 @@
     - [14.4 Classes e métodos `final`](#144-classes-e-métodos-final)
     - [14.5 Introdução a polimorfismo](#145-introdução-a-polimorfismo)
     - [14.6 Classes abstratas](#146-classes-abstratas)
+    - [14.7 Métodos abstratos](#147-métodos-abstratos)
 15. [Exercícios Resolvidos](#15-exercícios-resolvidos)
 
 ---
@@ -4506,7 +4507,79 @@ Total: 1500.0
 
 O laço do depósito não sabe qual tipo de conta está processando: ele chama `deposit` sobre `Account`, e cada objeto executa a sua versão (aqui, `deposit` é herdado de `Account` nas duas contas).
 
-> 🔜 A aula seguinte do material trata de **métodos abstratos**, que são métodos declarados na superclasse abstrata sem implementação, obrigando cada subclasse a fornecer a sua própria versão. Esse assunto não está coberto nesta seção.
+### 14.7 Métodos abstratos
+
+Um **método abstrato** é um método **sem implementação**: ele tem assinatura, mas não tem corpo. Ele serve para declarar que toda subclasse concreta precisa fornecer a sua própria versão.
+
+Métodos abstratos aparecem quando a classe é **genérica demais** para saber como um comportamento deve ser feito. A superclasse diz *o que* deve existir, e cada subclasse decide *como* funciona.
+
+#### Regras
+
+- Um método abstrato é declarado com `abstract`, sem chaves, terminando em `;`.
+- **Se uma classe tem pelo menos um método abstrato, ela também precisa ser abstrata.** A própria declaração da classe deve conter `abstract`.
+- Toda subclasse **não abstrata** é obrigada a implementar todos os métodos abstratos herdados.
+- Notação UML: o método aparece em **itálico**, assim como a classe abstrata.
+
+#### Exemplo ilustrativo: figuras geométricas
+
+Uma figura genérica não tem como calcular a área sem saber qual é a forma. Então `area()` é declarado como abstrato em `Shape`, e cada figura concreta implementa o seu próprio cálculo:
+
+```java
+public abstract class Shape {
+    public abstract double area();
+}
+
+class Rectangle extends Shape {
+    private double w, h;
+
+    public Rectangle(double w, double h) { this.w = w; this.h = h; }
+
+    @Override
+    public double area() { return w * h; }
+}
+
+class Circle extends Shape {
+    private double r;
+
+    public Circle(double r) { this.r = r; }
+
+    @Override
+    public double area() { return Math.PI * r * r; }
+}
+```
+
+Testei o que o compilador faz com duas situações erradas:
+
+```java
+class Broken extends Shape { }   // não implementa area()
+Shape s = new Shape();           // Shape é abstrata
+```
+
+```
+error: Broken is not abstract and does not override abstract method area() in Shape
+error: Shape is abstract; cannot be instantiated
+```
+
+Usando a lista de figuras, o cálculo é feito de forma uniforme, como na seção [14.5](#145-introdução-a-polimorfismo):
+
+```java
+java.util.List<Shape> list = new java.util.ArrayList<>();
+list.add(new Rectangle(4.0, 5.0));
+list.add(new Circle(3.0));
+
+for (Shape x : list) {
+    System.out.printf("%.2f%n", x.area());
+}
+```
+
+**Saída:**
+
+```
+20.00
+28.27
+```
+
+> 💡 Repare que o laço chama `x.area()` sobre `Shape`, sem nenhum `instanceof`. Cada figura executa a sua própria implementação, e a superclasse garante que todas têm `area()`.
 
 ---
 
