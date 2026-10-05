@@ -83,6 +83,7 @@
     - [14.3 Sobreposição, a palavra `super`, e `@Override`](#143-sobreposição-a-palavra-super-e-override)
     - [14.4 Classes e métodos `final`](#144-classes-e-métodos-final)
     - [14.5 Introdução a polimorfismo](#145-introdução-a-polimorfismo)
+    - [14.6 Classes abstratas](#146-classes-abstratas)
 15. [Exercícios Resolvidos](#15-exercícios-resolvidos)
 
 ---
@@ -4436,6 +4437,76 @@ System.out.println(acc3.getBalance());   // 793.0 — versão de BusinessAccount
 ```
 
 Testado aqui: a saída é exatamente `795.0`, `800.0` e `793.0`, como visto em [14.3](#143-sobreposição-a-palavra-super-e-override) — o polimorfismo já estava em ação, mesmo antes de ter sido nomeado como tal.
+
+### 14.6 Classes abstratas
+
+Uma **classe abstrata** é uma classe que **não pode ser instanciada**. Ela existe para ser apenas superclasse: só as subclasses não abstratas podem virar objetos. Isso garante uma **herança total**, ou seja, a superclasse nunca aparece sozinha no sistema.
+
+Para declarar uma classe abstrata, basta acrescentar `abstract` na declaração.
+
+#### Exemplo — conta bancária sem conta comum
+
+**Cenário:** o banco só permite contas poupança e contas para empresas. Não existe conta comum. Para impedir que alguém crie uma conta comum por engano, basta declarar `Account` como abstrata:
+
+```java
+public abstract class Account {
+    // ... mesmos atributos e métodos de antes
+}
+```
+
+Tentando instanciar a classe abstrata:
+
+```java
+Account a = new Account(1, "x", 0.0);
+```
+
+```
+error: Account is abstract; cannot be instantiated
+```
+
+O compilador barra a criação antes de o programa rodar. `SavingsAccount` e `BusinessAccount` continuam normais, porque estendem `Account` e não são abstratas.
+
+> 💬 **Notação UML:** uma classe abstrata aparece com o nome em **itálico** no diagrama de classes (ou com o estereótipo `<<abstract>>`).
+
+#### Por que não criar só `SavingsAccount` e `BusinessAccount`?
+
+Essa é a pergunta que o material faz, e a resposta tem dois motivos:
+
+- **Reuso:** os atributos e métodos comuns (número, titular, saldo, `deposit`, `withDraw`) ficam escritos uma vez só, em `Account`.
+- **Polimorfismo:** a superclasse, mesmo abstrata, permite tratar **todos os tipos de conta de forma uniforme**. Dá para colocar contas poupança e empresariais numa mesma coleção `List<Account>` e aplicar a mesma operação a todas.
+
+**Demo do material:** a partir de uma lista mista, o material propõe duas tarefas: **totalizar o saldo** de todas as contas, e **depositar 10.00** em todas elas. Reproduzi isso num teste temporário, já que as classes de conta não estão mais no projeto atual:
+
+```java
+List<Account> list = new ArrayList<>();
+list.add(new SavingsAccount(1, "A", 1000.0, 0.01));
+list.add(new BusinessAccount(2, "B", 500.0, 300.0));
+
+double total = 0.0;
+for (Account acc : list) {
+    total += acc.getBalance();
+}
+System.out.println("Total: " + total);
+
+for (Account acc : list) {
+    acc.deposit(10.0);
+}
+for (Account acc : list) {
+    System.out.println(acc.getBalance());
+}
+```
+
+**Saída:**
+
+```
+Total: 1500.0
+1010.0
+510.0
+```
+
+O laço do depósito não sabe qual tipo de conta está processando: ele chama `deposit` sobre `Account`, e cada objeto executa a sua versão (aqui, `deposit` é herdado de `Account` nas duas contas).
+
+> 🔜 A aula seguinte do material trata de **métodos abstratos**, que são métodos declarados na superclasse abstrata sem implementação, obrigando cada subclasse a fornecer a sua própria versão. Esse assunto não está coberto nesta seção.
 
 ---
 
