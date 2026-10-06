@@ -85,7 +85,9 @@
     - [14.5 Introdução a polimorfismo](#145-introdução-a-polimorfismo)
     - [14.6 Classes abstratas](#146-classes-abstratas)
     - [14.7 Métodos abstratos](#147-métodos-abstratos)
-15. [Exercícios Resolvidos](#15-exercícios-resolvidos)
+15. [Tratamento de Exceções](#15-tratamento-de-exceções)
+    - [15.1 Discussão inicial sobre exceções](#151-discussão-inicial-sobre-exceções)
+16. [Exercícios Resolvidos](#16-exercícios-resolvidos)
 
 ---
 
@@ -4583,7 +4585,70 @@ for (Shape x : list) {
 
 ---
 
-## 15. Exercícios Resolvidos
+## 15. Tratamento de Exceções
+
+### 15.1 Discussão inicial sobre exceções
+
+> ℹ️ Esta aula é introdutória: ainda não dá para entender tudo a fundo. Os exemplos práticos das próximas aulas vão deixar tudo mais claro.
+
+**Exceção** é qualquer condição de erro ou comportamento inesperado que um programa encontra durante a execução.
+
+Em Java, uma exceção é um **objeto**, herdado de uma das duas classes abaixo:
+
+| Tipo | Classe base | Comportamento do compilador |
+|---|---|---|
+| **Checada** | `java.lang.Exception` | **Obriga** a tratar a exceção ou a propagá-la |
+| **Não checada** | `java.lang.RuntimeException` | **Não obriga** a tratar nem a propagar |
+
+Testei a diferença com dois métodos. Um lança `Exception` sem declarar nada, e o compilador recusa:
+
+```java
+static void f() { throw new Exception("x"); }
+```
+
+```
+error: unreported exception Exception; must be caught or declared to be thrown
+```
+
+Já `throw new RuntimeException("y")` compila sem nenhuma declaração adicional, porque é uma exceção não checada.
+
+#### Propagação
+
+Quando uma exceção é lançada, ela sobe pela **pilha de chamadas** de métodos que estão em execução. Ela segue subindo até ser **capturada e tratada** em algum ponto, ou até o programa ser encerrado.
+
+> 💡 **Analogia:** pense numa cadeia de pessoas passando um problema para cima. Quem percebe o erro pode resolvê-lo ali, ou repassar para quem está acima. Se ninguém resolver, o problema chega ao topo e a aplicação para.
+
+#### Hierarquia de exceções
+
+Todas as exceções descendem de `Throwable`. Testei a cadeia de superclasses de algumas delas:
+
+```
+IndexOutOfBoundsException -> RuntimeException -> Exception -> Throwable -> Object
+NullPointerException      -> RuntimeException -> Exception -> Throwable -> Object
+IOException               -> Exception -> Throwable -> Object
+OutOfMemoryError          -> VirtualMachineError -> Error -> Throwable -> Object
+```
+
+Resumindo a árvore:
+
+- **`Throwable`** — raiz de tudo que pode ser lançado.
+  - **`Error`** — erros graves do ambiente, como `OutOfMemoryError`. Não são feitos para ser tratados pela aplicação.
+  - **`Exception`** — exceções checadas, como `IOException`.
+    - **`RuntimeException`** — exceções não checadas, como `NullPointerException` e `IndexOutOfBoundsException`.
+
+> 🔗 Essas `NullPointerException` e `IndexOutOfBoundsException` são os mesmos erros que já apareceram em outras seções deste material, quando um atributo `null` era usado ou quando um índice de vetor saía dos limites (seções [8.10](#810-matrizes-na-prática-linhas-colunas-e-um-exemplo-simples) e [8.1](#81-tipos-referência-vs-tipos-valor)).
+
+#### Por que usar exceções?
+
+O modelo de exceções existe para tratar erros de forma **consistente e flexível**. Os principais benefícios apontados pelo material são:
+
+- **Delegação da lógica do erro:** quem trata o erro é a classe que conhece as regras capazes de causá-lo, e não o código que apenas chamou essa classe.
+- **Tratamento organizado e hierárquico:** exceções de tipos diferentes podem ser tratadas por níveis, do mais específico ao mais geral.
+- **Carga de dados:** a exceção pode carregar informações quaisquer sobre o problema.
+
+---
+
+## 16. Exercícios Resolvidos
 
 ### Estrutura Sequencial
 
