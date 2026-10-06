@@ -88,6 +88,7 @@
 15. [Tratamento de Exceções](#15-tratamento-de-exceções)
     - [15.1 Discussão inicial sobre exceções](#151-discussão-inicial-sobre-exceções)
     - [15.2 Estrutura `try-catch`](#152-estrutura-try-catch)
+    - [15.3 Pilha de chamadas de métodos (stack trace)](#153-pilha-de-chamadas-de-métodos-stack-trace)
 16. [Exercícios Resolvidos](#16-exercícios-resolvidos)
 
 ---
@@ -4731,6 +4732,95 @@ End of program
 ```
 
 > 💡 **O ponto da aula:** em nenhum dos três casos o programa para de forma abrupta. O bloco `catch` correspondente trata o erro, e a execução continua até `End of program`. Sem o `try-catch`, a posição `7` lançaria `ArrayIndexOutOfBoundsException` e encerraria o programa.
+
+
+### 15.3 Pilha de chamadas de métodos (stack trace)
+
+Quando um método é chamado, a execução dele entra numa **pilha de chamadas** (*call stack*). Quando o método termina, ele sai dessa pilha e a execução volta para quem o chamou. A pilha segue a regra **último a entrar, primeiro a sair**.
+
+> 💡 **Analogia:** pense numa pilha de pratos. O último prato colocado é o primeiro a ser retirado. Cada método é um prato: `main` é o primeiro, depois `method1` é colocado em cima, e depois `method2` em cima de `method1`. Quando `method2` termina, ele é retirado, e a execução volta para `method1`.
+
+#### O demo
+
+O programa é o mesmo da seção [15.2](#152-estrutura-try-catch), agora organizado em três métodos: `main` chama `method1`, e `method1` chama `method2`. Cada método imprime uma linha ao começar e uma ao terminar, o que permite acompanhar a ordem de execução.
+
+```java
+package application;
+
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
+public class Program {
+    public static void main(String[] args) {
+        method1();
+        System.out.println("End of program");
+    }
+    public static void method1() {
+        System.out.println("***METHOD1 START***");
+        method2();
+        System.out.println("***METHOD1 END***");
+    }
+    public static void method2() {
+        System.out.println("***METHOD2 START***");
+        Scanner sc = new Scanner(System.in);
+        try {
+            String[] vect = sc.nextLine().split(" ");
+            int position = sc.nextInt();
+            System.out.println(vect[position]);
+        }
+        catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Invalid position!");
+            e.printStackTrace();
+            sc.next();
+        }
+        catch (InputMismatchException e) {
+            System.out.println("Input error");
+        }
+        sc.close();
+        System.out.println("***METHOD2 END***");
+    }
+}
+```
+
+**Caso normal** (`a b c` e posição `1`):
+
+```
+***METHOD1 START***
+***METHOD2 START***
+b
+***METHOD2 END***
+***METHOD1 END***
+End of program
+```
+
+A ordem das linhas mostra a pilha em ação: `method1` começa, `method2` começa e termina, e só então `method1` termina.
+
+**Posição fora do vetor** (`a b c` e posição `7`):
+
+```
+***METHOD1 START***
+***METHOD2 START***
+Invalid position!
+java.lang.ArrayIndexOutOfBoundsException: Index 7 out of bounds for length 3
+	at application.Program.method2(Program.java:22)
+	at application.Program.method1(Program.java:13)
+	at application.Program.main(Program.java:8)
+***METHOD2 END***
+***METHOD1 END***
+End of program
+```
+
+O `e.printStackTrace()` imprime o **stack trace**: a lista de métodos pelos quais a exceção passou, do ponto onde ocorreu até o `main`. Cada linha `at ...` mostra a classe, o método e o número da linha. Lendo de cima para baixo:
+
+- a exceção foi lançada em `method2`, na linha 22;
+- `method2` foi chamado por `method1`, na linha 13;
+- `method1` foi chamado por `main`, na linha 8.
+
+Como a exceção foi **capturada** no `catch`, o programa não para. O stack trace é só um registro do caminho percorrido, e a execução continua normalmente até `End of program`.
+
+> ⚠️ Esse caso também ilustra um detalhe do código: o `sc.next()` dentro do `catch` consome um token da entrada. Por isso, o teste acima passou um `xx` extra, sem ele o programa ficaria esperando mais entrada.
+
+> 💡 Ao rodar pelo Maven (`mvn exec:java`), o stack trace traz linhas extras do próprio mecanismo de execução (reflexão e o plugin). Rodando diretamente com `java -cp target/classes application.Program`, aparecem só as três linhas `at application...` acima.
 
 ---
 
