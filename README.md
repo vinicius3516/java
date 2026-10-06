@@ -4691,7 +4691,7 @@ public class Program {
         try {
             String[] vect = sc.nextLine().split(" ");
             int position = sc.nextInt();
-            System.out.print(vect[position]);
+            System.out.println(vect[position]);
         }
         catch (ArrayIndexOutOfBoundsException e) {
             System.out.println("Invalid position.");
@@ -4712,10 +4712,9 @@ Testei os três caminhos possíveis:
 **Entrada normal** (`a b c` e posição `1`):
 
 ```
-bEnd of program
+b
+End of program
 ```
-
-A palavra `b` é impressa com `print` (sem quebra de linha), por isso `End of program` aparece na mesma linha.
 
 **Posição fora do vetor** (`a b c` e posição `7`):
 
