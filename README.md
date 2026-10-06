@@ -6679,16 +6679,16 @@ Iphone (used)  $ 400.00 (Manufacture date: 15/03/2017)
 - **Pessoa física** (nome, renda anual e gastos com saúde): renda abaixo de 20000.00 paga 15%; renda de 20000.00 em diante paga 25%. Metade dos gastos com saúde é abatida do imposto. Exemplo: renda 50000.00 e gastos 2000.00 → `50000 × 25% − 2000 × 50% = 11500.00`.
 - **Pessoa jurídica** (nome, renda anual e número de funcionários): paga 16%, ou 14% se tiver mais de 10 funcionários. Exemplo: renda 400000.00 e 25 funcionários → `400000 × 14% = 56000.00`.
 
-Este exercício combina **classe abstrata com método abstrato** (`TaxPayers` com `TaxCalculation()`, seção [14.6](#146-classes-abstratas) e [14.7](#147-métodos-abstratos)), **herança** nas subclasses `Individual` e `Company`, e **polimorfismo** no laço que soma os impostos, sem nenhum `instanceof`.
+Este exercício combina **classe abstrata com método abstrato** (`TaxPayer` com `taxCalculation()`, seção [14.6](#146-classes-abstratas) e [14.7](#147-métodos-abstratos)), **herança** nas subclasses `Individual` e `Company`, e **polimorfismo** no laço que soma os impostos, sem nenhum `instanceof`.
 
 ```java
 package entities;
 
-public abstract class TaxPayers {
+public abstract class TaxPayer {
     private final String name;
     private final Double anualIncome;
 
-    public TaxPayers(String name, Double anualIncome) {
+    public TaxPayer(String name, Double anualIncome) {
         this.name = name;
         this.anualIncome = anualIncome;
     }
@@ -6703,17 +6703,17 @@ public abstract class TaxPayers {
 
     @Override
     public String toString() {
-        return name + " $ " + String.format("%.2f", TaxCalculation());
+        return name + " $ " + String.format("%.2f", taxCalculation());
     }
 
-    public abstract Double TaxCalculation();
+    public abstract Double taxCalculation();
 }
 ```
 
 ```java
 package entities;
 
-public class Individual extends TaxPayers {
+public class Individual extends TaxPayer {
     private final Double healthExpenditures;
 
     public Individual(String name, Double anualIncome, Double healthExpenditures) {
@@ -6725,7 +6725,8 @@ public class Individual extends TaxPayers {
         return healthExpenditures;
     }
 
-    public Double TaxCalculation() {
+    @Override
+    public Double taxCalculation() {
         double total = 0.0;
         if (healthExpenditures > 0.0) {
             if (super.getAnualIncome() < 20000.00) {
@@ -6749,7 +6750,7 @@ public class Individual extends TaxPayers {
 ```java
 package entities;
 
-public class Company extends TaxPayers {
+public class Company extends TaxPayer {
     private final Integer numberOfEmployees;
 
     public Company(String name, Double anualIncome, Integer numberOfEmployees) {
@@ -6761,7 +6762,8 @@ public class Company extends TaxPayers {
         return numberOfEmployees;
     }
 
-    public Double TaxCalculation() {
+    @Override
+    public Double taxCalculation() {
         double total = 0.0;
         if (numberOfEmployees <= 10) {
             total = super.getAnualIncome() * 16 / 100;
@@ -6778,7 +6780,7 @@ package application;
 
 import entities.Company;
 import entities.Individual;
-import entities.TaxPayers;
+import entities.TaxPayer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6791,7 +6793,7 @@ public class Program {
         Locale.setDefault(Locale.US);
         Scanner sc = new Scanner(System.in);
 
-        List<TaxPayers> list = new ArrayList<>();
+        List<TaxPayer> list = new ArrayList<>();
 
         System.out.print("Enter the number of tax payers: ");
         int n = sc.nextInt();
@@ -6827,9 +6829,9 @@ public class Program {
 
         System.out.println("TAXES PAID:");
         double totalTaxes = 0.0;
-        for (TaxPayers tx : list) {
+        for (TaxPayer tx : list) {
             System.out.println(tx);
-            totalTaxes += tx.TaxCalculation();
+            totalTaxes += tx.taxCalculation();
         }
         System.out.println();
 
@@ -6868,10 +6870,5 @@ Bob $ 29500.00
 TOTAL TAXES: $ 97000.00
 ```
 
-> 💡 **Abstração em ação:** `TaxCalculation()` é abstrato em `TaxPayers`, então o laço final soma `tx.TaxCalculation()` sobre `TaxPayers` sem saber se o contribuinte é pessoa física ou jurídica. A regra de cada tipo fica dentro da própria subclasse.
->
-> ⚠️ **Alguns pontos de nomenclatura e estilo no código:**
-> 1. O método se chama `TaxCalculation()` com inicial maiúscula. Pela convenção do Java, métodos começam com letra minúscula (`taxCalculation()`), como discutido em [7.15](#715-encapsulamento).
-> 2. A classe se chama `TaxPayers` (plural). Como cada objeto representa um único contribuinte, o nome mais adequado seria `TaxPayer`.
-> 3. Os métodos `TaxCalculation()` nas subclasses não têm `@Override`. Não é obrigatório, mas a anotação deixa explícito que estão sobrescrevendo o método abstrato, como visto em [14.3](#143-sobreposição-a-palavra-super-e-override).
+> 💡 **Abstração em ação:** `taxCalculation()` é abstrato em `TaxPayer`, então o laço final soma `tx.taxCalculation()` sobre `TaxPayer` sem saber se o contribuinte é pessoa física ou jurídica. A regra de cada tipo fica dentro da própria subclasse.
 </details>
