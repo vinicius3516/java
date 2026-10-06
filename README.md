@@ -87,6 +87,7 @@
     - [14.7 Métodos abstratos](#147-métodos-abstratos)
 15. [Tratamento de Exceções](#15-tratamento-de-exceções)
     - [15.1 Discussão inicial sobre exceções](#151-discussão-inicial-sobre-exceções)
+    - [15.2 Estrutura `try-catch`](#152-estrutura-try-catch)
 16. [Exercícios Resolvidos](#16-exercícios-resolvidos)
 
 ---
@@ -4645,6 +4646,92 @@ O modelo de exceções existe para tratar erros de forma **consistente e flexív
 - **Delegação da lógica do erro:** quem trata o erro é a classe que conhece as regras capazes de causá-lo, e não o código que apenas chamou essa classe.
 - **Tratamento organizado e hierárquico:** exceções de tipos diferentes podem ser tratadas por níveis, do mais específico ao mais geral.
 - **Carga de dados:** a exceção pode carregar informações quaisquer sobre o problema.
+
+
+### 15.2 Estrutura `try-catch`
+
+Para tratar uma exceção, o código é dividido em dois blocos:
+
+- **Bloco `try`** — contém o código que representa a execução normal do trecho que pode lançar uma exceção.
+- **Bloco `catch`** — contém o código que será executado caso uma exceção ocorra.
+
+O tipo da exceção a ser tratada precisa ser informado no `catch`. Como vimos em [14.2](#142-upcasting-e-downcasting), um tipo mais genérico também pode ser usado, pois o upcasting é permitido.
+
+**Sintaxe:**
+
+```java
+try {
+    // código que pode lançar exceção
+}
+catch (ExceptionType e) {
+    // tratamento
+}
+catch (ExceptionType e) {
+    // outro tratamento
+}
+```
+
+Pode haver vários blocos `catch` para tipos diferentes de exceção.
+
+#### Demo
+
+O programa lê uma linha com palavras separadas por espaço, lê uma posição e imprime a palavra naquela posição. Dois erros podem acontecer: a posição sair dos limites do vetor, ou a entrada não ser um inteiro.
+
+```java
+package application;
+
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        try {
+            String[] vect = sc.nextLine().split(" ");
+            int position = sc.nextInt();
+            System.out.print(vect[position]);
+        }
+        catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Invalid position.");
+        }
+        catch (InputMismatchException e) {
+            System.out.println("Input error.");
+        }
+
+        System.out.println("End of program");
+
+        sc.close();
+    }
+}
+```
+
+Testei os três caminhos possíveis:
+
+**Entrada normal** (`a b c` e posição `1`):
+
+```
+bEnd of program
+```
+
+A palavra `b` é impressa com `print` (sem quebra de linha), por isso `End of program` aparece na mesma linha.
+
+**Posição fora do vetor** (`a b c` e posição `7`):
+
+```
+Invalid position.
+End of program
+```
+
+**Posição que não é inteiro** (`a b c` e `xyz`):
+
+```
+Input error.
+End of program
+```
+
+> 💡 **O ponto da aula:** em nenhum dos três casos o programa para de forma abrupta. O bloco `catch` correspondente trata o erro, e a execução continua até `End of program`. Sem o `try-catch`, a posição `7` lançaria `ArrayIndexOutOfBoundsException` e encerraria o programa.
 
 ---
 
