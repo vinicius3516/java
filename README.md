@@ -6871,7 +6871,7 @@ TOTAL TAXES: $ 97000.00
 > 💡 **Abstração em ação:** `TaxCalculation()` é abstrato em `TaxPayers`, então o laço final soma `tx.TaxCalculation()` sobre `TaxPayers` sem saber se o contribuinte é pessoa física ou jurídica. A regra de cada tipo fica dentro da própria subclasse.
 >
 > ⚠️ **Alguns pontos de nomenclatura e estilo no código:**
-> 1. O método se chama `TaxCalculation()` com inicial maiúscula. Pela convenção do Java, métodos começam com letra minúscula (`taxCalculation()`), como discutido em [5.x](#5-estruturas-de-repetição) e no exercício da conta bancária.
+> 1. O método se chama `TaxCalculation()` com inicial maiúscula. Pela convenção do Java, métodos começam com letra minúscula (`taxCalculation()`), como discutido em [7.15](#715-encapsulamento).
 > 2. A classe se chama `TaxPayers` (plural). Como cada objeto representa um único contribuinte, o nome mais adequado seria `TaxPayer`.
 > 3. Os métodos `TaxCalculation()` nas subclasses não têm `@Override`. Não é obrigatório, mas a anotação deixa explícito que estão sobrescrevendo o método abstrato, como visto em [14.3](#143-sobreposição-a-palavra-super-e-override).
 </details>
