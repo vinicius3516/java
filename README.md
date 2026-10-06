@@ -6670,3 +6670,208 @@ Iphone (used)  $ 400.00 (Manufacture date: 15/03/2017)
 >
 > ⚠️ **Um detalhe de formatação:** na saída, o Iphone aparece com dois espaços (`(used)  $ 400.00`). Isso acontece porque `UsedProduct.priceTag()` começa com `" (used) "` (com espaço no fim) e `Product.priceTag()` também começa com espaço. A correção seria tirar o espaço final de `" (used) "`.
 </details>
+
+<details>
+<summary><strong>Exercício 3 — Imposto de contribuintes (pessoa física e jurídica)</strong></summary>
+
+**Enunciado:** ler os dados de `N` contribuintes, que podem ser pessoa física ou pessoa jurídica, e mostrar o imposto pago por cada um, além do total arrecadado.
+
+- **Pessoa física** (nome, renda anual e gastos com saúde): renda abaixo de 20000.00 paga 15%; renda de 20000.00 em diante paga 25%. Metade dos gastos com saúde é abatida do imposto. Exemplo: renda 50000.00 e gastos 2000.00 → `50000 × 25% − 2000 × 50% = 11500.00`.
+- **Pessoa jurídica** (nome, renda anual e número de funcionários): paga 16%, ou 14% se tiver mais de 10 funcionários. Exemplo: renda 400000.00 e 25 funcionários → `400000 × 14% = 56000.00`.
+
+Este exercício combina **classe abstrata com método abstrato** (`TaxPayers` com `TaxCalculation()`, seção [14.6](#146-classes-abstratas) e [14.7](#147-métodos-abstratos)), **herança** nas subclasses `Individual` e `Company`, e **polimorfismo** no laço que soma os impostos, sem nenhum `instanceof`.
+
+```java
+package entities;
+
+public abstract class TaxPayers {
+    private final String name;
+    private final Double anualIncome;
+
+    public TaxPayers(String name, Double anualIncome) {
+        this.name = name;
+        this.anualIncome = anualIncome;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Double getAnualIncome() {
+        return anualIncome;
+    }
+
+    @Override
+    public String toString() {
+        return name + " $ " + String.format("%.2f", TaxCalculation());
+    }
+
+    public abstract Double TaxCalculation();
+}
+```
+
+```java
+package entities;
+
+public class Individual extends TaxPayers {
+    private final Double healthExpenditures;
+
+    public Individual(String name, Double anualIncome, Double healthExpenditures) {
+        super(name, anualIncome);
+        this.healthExpenditures = healthExpenditures;
+    }
+
+    public Double getHealthExpenditures() {
+        return healthExpenditures;
+    }
+
+    public Double TaxCalculation() {
+        double total = 0.0;
+        if (healthExpenditures > 0.0) {
+            if (super.getAnualIncome() < 20000.00) {
+                total = super.getAnualIncome() * 15 / 100 - (healthExpenditures / 2);
+            } else {
+                total = super.getAnualIncome() * 25 / 100 - (healthExpenditures / 2);
+            }
+        } else {
+            if (super.getAnualIncome() < 20000.00) {
+                total = super.getAnualIncome() * 15 / 100;
+            } else {
+                total = super.getAnualIncome() * 25 / 100;
+            }
+        }
+
+        return total;
+    }
+}
+```
+
+```java
+package entities;
+
+public class Company extends TaxPayers {
+    private final Integer numberOfEmployees;
+
+    public Company(String name, Double anualIncome, Integer numberOfEmployees) {
+        super(name, anualIncome);
+        this.numberOfEmployees = numberOfEmployees;
+    }
+
+    public Integer getNumberOfEmployees() {
+        return numberOfEmployees;
+    }
+
+    public Double TaxCalculation() {
+        double total = 0.0;
+        if (numberOfEmployees <= 10) {
+            total = super.getAnualIncome() * 16 / 100;
+        } else {
+            total = super.getAnualIncome() * 14 / 100;
+        }
+        return total;
+    }
+}
+```
+
+```java
+package application;
+
+import entities.Company;
+import entities.Individual;
+import entities.TaxPayers;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Scanner;
+
+public class Program {
+
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.US);
+        Scanner sc = new Scanner(System.in);
+
+        List<TaxPayers> list = new ArrayList<>();
+
+        System.out.print("Enter the number of tax payers: ");
+        int n = sc.nextInt();
+
+        for (int i = 0; i < n; i++) {
+            System.out.println("Tax payer #" + (i + 1) + " data:");
+            System.out.print("Individual or company (i/c)? ");
+            String type = String.valueOf(sc.next().charAt(0));
+            sc.nextLine();
+            System.out.print("Name: ");
+            String name = sc.nextLine();
+            System.out.print("Anual Income: ");
+            double anualIncome = sc.nextDouble();
+            sc.nextLine();
+            if (type.equals("i")) {
+                System.out.print("Health expenditures: ");
+                double healthExpenditures = sc.nextDouble();
+                sc.nextLine();
+
+                list.add(new Individual(name, anualIncome, healthExpenditures));
+            } else {
+                if (type.equals("c")) {
+                    System.out.print("Number of employees: ");
+                    int numberOfEmployees = sc.nextInt();
+                    sc.nextLine();
+
+                    list.add(new Company(name, anualIncome, numberOfEmployees));
+                }
+            }
+        }
+
+        System.out.println();
+
+        System.out.println("TAXES PAID:");
+        double totalTaxes = 0.0;
+        for (TaxPayers tx : list) {
+            System.out.println(tx);
+            totalTaxes += tx.TaxCalculation();
+        }
+        System.out.println();
+
+        System.out.print("TOTAL TAXES: $ " + String.format("%.2f", totalTaxes));
+
+        sc.close();
+    }
+}
+```
+
+**Saída:**
+
+```
+Enter the number of tax payers: 3
+Tax payer #1 data:
+Individual or company (i/c)? i
+Name: Alex
+Anual Income: 50000.00
+Health expenditures: 2000.00
+Tax payer #2 data:
+Individual or company (i/c)? c
+Name: SoftTech
+Anual Income: 400000.00
+Number of employees: 25
+Tax payer #3 data:
+Individual or company (i/c)? i
+Name: Bob
+Anual Income: 120000.00
+Health expenditures: 1000.00
+
+TAXES PAID:
+Alex $ 11500.00
+SoftTech $ 56000.00
+Bob $ 29500.00
+
+TOTAL TAXES: $ 97000.00
+```
+
+> 💡 **Abstração em ação:** `TaxCalculation()` é abstrato em `TaxPayers`, então o laço final soma `tx.TaxCalculation()` sobre `TaxPayers` sem saber se o contribuinte é pessoa física ou jurídica. A regra de cada tipo fica dentro da própria subclasse.
+>
+> ⚠️ **Alguns pontos de nomenclatura e estilo no código:**
+> 1. O método se chama `TaxCalculation()` com inicial maiúscula. Pela convenção do Java, métodos começam com letra minúscula (`taxCalculation()`), como discutido em [5.x](#5-estruturas-de-repetição) e no exercício da conta bancária.
+> 2. A classe se chama `TaxPayers` (plural). Como cada objeto representa um único contribuinte, o nome mais adequado seria `TaxPayer`.
+> 3. Os métodos `TaxCalculation()` nas subclasses não têm `@Override`. Não é obrigatório, mas a anotação deixa explícito que estão sobrescrevendo o método abstrato, como visto em [14.3](#143-sobreposição-a-palavra-super-e-override).
+</details>
