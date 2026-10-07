@@ -89,6 +89,7 @@
     - [15.1 Discussão inicial sobre exceções](#151-discussão-inicial-sobre-exceções)
     - [15.2 Estrutura `try-catch`](#152-estrutura-try-catch)
     - [15.3 Pilha de chamadas de métodos (stack trace)](#153-pilha-de-chamadas-de-métodos-stack-trace)
+    - [15.4 Bloco `finally`](#154-bloco-finally)
 16. [Exercícios Resolvidos](#16-exercícios-resolvidos)
 
 ---
@@ -4821,6 +4822,75 @@ Como a exceção foi **capturada** no `catch`, o programa não para. O stack tra
 > ⚠️ Esse caso também ilustra um detalhe do código: o `sc.next()` dentro do `catch` consome um token da entrada. Por isso, o teste acima passou um `xx` extra, sem ele o programa ficaria esperando mais entrada.
 
 > 💡 Ao rodar pelo Maven (`mvn exec:java`), o stack trace traz linhas extras do próprio mecanismo de execução (reflexão e o plugin). Rodando diretamente com `java -cp target/classes application.Program`, aparecem só as três linhas `at application...` acima.
+
+
+### 15.4 Bloco `finally`
+
+O bloco `finally` contém código que é executado **independentemente** de ter ocorrido uma exceção ou não — ocorrendo erro, sendo ele capturado, ou nem havendo erro algum, o `finally` sempre roda.
+
+**Sintaxe:**
+
+```java
+try {
+}
+catch (ExceptionType e) {
+}
+finally {
+}
+```
+
+> 💡 **Exemplo clássico, segundo o material:** fechar um arquivo, uma conexão de banco de dados, ou qualquer outro recurso que precise ser liberado ao final do processamento — independentemente de o processamento ter dado certo ou lançado uma exceção no meio do caminho.
+
+#### Demo
+
+```java
+package application;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Scanner;
+
+public class Program {
+    public static void main(String[] args) {
+        File file = new File("/home/viniciuspereira/Documents/study/java/in.txt");
+        Scanner sc = null;
+        try {
+            sc = new Scanner(file);
+            while (sc.hasNextLine()) {
+                System.out.println(sc.nextLine());
+            }
+        }
+        catch (IOException e) {
+            System.out.println("Error opening file: " + e.getMessage());
+        }
+        finally {
+            if (sc != null) {
+                sc.close();
+
+                System.out.println("Finally block executed");
+            }
+        }
+    }
+}
+```
+
+`sc` é declarado como `null` **fora** do `try`, para que o `finally` consiga enxergá-lo (uma variável declarada dentro do `try` não existiria mais fora dele — seção [4.7](#47-escopo-e-inicialização-de-variáveis)).
+
+**Arquivo ausente:**
+
+```
+Error opening file: /home/viniciuspereira/Documents/study/java/in.txt (No such file or directory)
+```
+
+**Arquivo existente, com duas linhas:**
+
+```
+linha 1
+linha 2
+Finally block executed
+```
+
+> ⚠️ **O `finally` sempre roda, mas nem toda linha dentro dele é sempre visível.** Repare que, quando o arquivo não existe, `"Finally block executed"` **não** aparece — não porque o `finally` deixou de executar, mas porque todo o conteúdo dele está dentro de `if (sc != null)`, e `sc` continua `null` quando `new Scanner(file)` lança a exceção antes de atribuir nada a `sc`. O bloco `finally` roda nos dois casos; o que muda é se a condição dentro dele é satisfeita.
 
 ---
 
